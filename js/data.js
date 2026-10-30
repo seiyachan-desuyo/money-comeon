@@ -150,9 +150,9 @@ const BS_DATA = {
   assets:[
     { name:'现金 / 银行账户', amount:86420, note:'工行对公 + 收款码' },
     { name:'库存耗材',        amount:8650,  note:'18 种耗材按采购价' },
-    { name:'会员储值卡',      amount:9860,  note:'34 位会员待核销' },
   ],
   liabilities:[
+    { name:'会员储值卡', amount:9860, note:'34 位会员待核销 · 预收服务款' },
     { name:'供货商应付', amount:3260, note:'美业一站采 · 账期 7 天' },
   ],
 };
