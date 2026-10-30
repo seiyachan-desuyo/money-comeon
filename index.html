@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>来钱花 · 小微商户经营管家</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ============ 启动屏 ============ -->
+<div class="splash" id="splash">
+  <div class="splash-logo">
+    <svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true">
+      <defs><linearGradient id="spG" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#E9C460"/><stop offset="1" stop-color="#B8860B"/>
+      </linearGradient></defs>
+      <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#spG)"/>
+      <text x="24" y="33" text-anchor="middle" font-size="26" fill="#fff" font-family="Songti SC, STSong, serif" font-weight="700">来</text>
+    </svg>
+  </div>
+  <div class="splash-name">来钱花</div>
+  <div class="splash-slogan">小微商户的经营管家</div>
+  <div class="splash-bar"><i id="splashBar"></i></div>
+</div>
+
+<div class="stage">
+<div class="phone">
+
+  <!-- ============ 状态栏 ============ -->
+  <div class="statusbar">
+    <span class="sb-time">9:41</span>
+    <span class="sb-icons">
+      <svg viewBox="0 0 18 12" width="17" height="11"><g fill="#2B2417"><rect x="0" y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+      <svg viewBox="0 0 16 12" width="16" height="11" fill="none" stroke="#2B2417" stroke-width="1.4"><path d="M1 4.2C5.1.8 10.9.8 15 4.2M3.3 7c2.4-2 7-2 9.4 0M5.8 9.7c1.3-1 3.1-1 4.4 0"/></svg>
+      <svg viewBox="0 0 26 12" width="25" height="11"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="#2B2417" opacity=".45"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="#2B2417"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="#2B2417" opacity=".45"/></svg>
+    </span>
+  </div>
+
+  <!-- ============ 页面容器 ============ -->
+  <main class="screen" id="screen">
+
+    <!-- ========== ① 首页 / 总览（钱） ========== -->
+    <section class="page on" id="page-home">
+      <header class="home-top">
+        <div>
+          <div class="shop-name">星心理发店 · 望京店
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6l4 4 4-4"/></svg>
+          </div>
+          <div class="hello">早上好，张老板，今天是 10 月 30 日 周五</div>
+        </div>
+        <div class="bell" data-tip="2 条待办">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2B2417" stroke-width="1.7"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg>
+          <i class="bell-dot"></i>
+        </div>
+      </header>
+
+      <!-- 资金卡 -->
+      <div class="bank-card">
+        <div class="bc-deco bc-deco1"></div>
+        <div class="bc-deco bc-deco2"></div>
+        <div class="bc-head">
+          <span class="bc-account">经营收入账户</span>
+          <span class="bc-badge">对公 · 工商银行</span>
+        </div>
+        <div class="bc-today">
+          <div class="bc-label">今日收入（元）</div>
+          <div class="bc-amount" id="homeTodayAmount">1,286.00</div>
+          <div class="bc-sub">今日 <b id="homeTodayCount">12</b> 笔 · 较昨日同时段 <em class="up">+8.2%</em></div>
+        </div>
+        <div class="bc-row">
+          <div class="bc-item">
+            <div class="bc-item-label">本月收入</div>
+            <div class="bc-item-val" id="homeMonthAmount">38,642.50</div>
+            <div class="bc-item-trend up">同比 +12.4%</div>
+          </div>
+          <div class="bc-divider"></div>
+          <div class="bc-item">
+            <div class="bc-item-label">本月支出</div>
+            <div class="bc-item-val">4,210.00</div>
+            <div class="bc-item-trend down">耗材 + 房租</div>
+          </div>
+          <div class="bc-divider"></div>
+          <div class="bc-item">
+            <div class="bc-item-label">储值卡待核销</div>
+            <div class="bc-item-val">9,860<span class="unit">元</span></div>
+            <div class="bc-item-trend">34 位会员</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 钱客货脑 四层框架 -->
+      <div class="layer-strip">
+        <div class="layer-item" data-go="ledger">
+          <span class="layer-ic ic-qian">钱</span><span class="layer-tx">记账对账</span>
+        </div>
+        <div class="layer-item" data-go="customers">
+          <span class="layer-ic ic-ke">客</span><span class="layer-tx">熟客经营</span>
+        </div>
+        <div class="layer-item" data-go="inventory">
+          <span class="layer-ic ic-huo">货</span><span class="layer-tx">耗材库存</span>
+        </div>
+        <div class="layer-item" data-go="insights">
+          <span class="layer-ic ic-nao">脑</span><span class="layer-tx">经营参谋</span>
+        </div>
+      </div>
+
+      <!-- 待办提醒 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>待办提醒</h3>
+          <span class="panel-more">2 条需处理</span>
+        </div>
+        <div class="todo-item" data-go="inventory">
+          <span class="todo-ic todo-danger">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+          </span>
+          <div class="todo-body">
+            <div class="todo-title">低库存 · 染发膏（自然黑）</div>
+            <div class="todo-desc">剩余 15%，预计 8 天后断货，建议补货 10 支</div>
+          </div>
+          <span class="todo-btn danger">去补货</span>
+        </div>
+        <div class="todo-item" data-go="customers">
+          <span class="todo-ic todo-warn">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+          </span>
+          <div class="todo-body">
+            <div class="todo-title">流失预警 · 王秀兰 等 12 位熟客</div>
+            <div class="todo-desc">王秀兰已 45 天未到店（历史到店 26 次）</div>
+          </div>
+          <span class="todo-btn warn">去唤回</span>
+        </div>
+      </div>
+
+      <!-- 今日流水 -->
+      <div class="panel">
+        <div class="panel-head">
+          <h3>今日流水</h3>
+          <span class="panel-more link" data-go="ledger">查看全部 ›</span>
+        </div>
+        <div id="homeFlow"></div>
+      </div>
+
+      <div class="page-end">— 来钱花 · 让每一笔收入都有数 —</div>
+    </section>
+
+    <!-- ========== ② 智能记账（钱） ========== -->
+    <section class="page" id="page-ledger">
+      <header class="sub-header">
+        <h2>智能记账</h2>
+        <p>说句话、截个图，账就自动记好了</p>
+      </header>
+
+      <div class="voice-stage">
+        <div class="voice-ring r1"></div>
+        <div class="voice-ring r2"></div>
+        <button class="mic-btn" id="micBtn" aria-label="语音记账">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0014 0v-1"/><path d="M12 18v4"/></svg>
+        </button>
+        <div class="voice-tip">点击开始语音记账</div>
+        <div class="voice-chips">
+          <span class="vchip" data-say="洗剪吹一位，38，微信收的">“洗剪吹一位，38，微信收的”</span>
+          <span class="vchip" data-say="王姐烫染套餐268，刷的会员卡">“王姐烫染268，会员卡”</span>
+        </div>
+        <div class="voice-entry-row">
+          <button class="entry-btn" id="shotBtn">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>
+            截图识别记账
+          </button>
+          <button class="entry-btn ghost" id="manualBtn">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+            手动记一笔
+          </button>
+          <input type="file" id="shotFile" accept="image/*" hidden />
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>历史流水</h3>
+          <span class="panel-more" id="ledgerMonth">本月 168 笔</span>
+        </div>
+        <div id="ledgerList"></div>
+      </div>
+      <div class="page-end">语音与截图均在本机加密解析，仅用于记账</div>
+    </section>
+
+    <!-- ========== ③ 客户（客） ========== -->
+    <section class="page" id="page-customers">
+      <header class="sub-header">
+        <h2>客户经营</h2>
+        <p>熟客资产一目了然，流失风险提前知道</p>
+      </header>
+
+      <div class="cust-summary">
+        <div class="cs-item"><b>342</b><span>全部客户</span></div>
+        <div class="cs-item"><b>286</b><span>熟客</span></div>
+        <div class="cs-item warn"><b>12</b><span>流失预警</span></div>
+        <div class="cs-item"><b>9.8k</b><span>储值余额(元)</span></div>
+      </div>
+
+      <div class="searchbar">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#A89B7C" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="custSearch" placeholder="搜索客户姓名 / 手机号" />
+      </div>
+
+      <div class="seg-bar" id="custSeg">
+        <span class="seg on" data-seg="all">全部</span>
+        <span class="seg" data-seg="vip">熟客</span>
+        <span class="seg" data-seg="risk">流失预警</span>
+        <span class="seg" data-seg="new">新客</span>
+      </div>
+
+      <div id="custList" class="cust-list"></div>
+      <div class="page-end">消费趋势为近 6 个月统计，仅店主可见</div>
+    </section>
+
+    <!-- ========== ④ 库存（货） ========== -->
+    <section class="page" id="page-inventory">
+      <header class="sub-header flat">
+        <div class="inv-head-row">
+          <div>
+            <h2>耗材库存</h2>
+            <p>18 种耗材 · 5 种低于安全库存</p>
+          </div>
+          <button class="cart-btn" id="cartBtn">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.4 12.4a1.5 1.5 0 001.5 1.2h8.3a1.5 1.5 0 001.5-1.2L22 7H6"/></svg>
+            <i id="cartCount" class="cart-count">0</i>
+          </button>
+        </div>
+      </header>
+
+      <div class="inv-overview">
+        <div class="io-card">
+          <span class="io-num danger">5</span>
+          <span class="io-label">库存紧张</span>
+        </div>
+        <div class="io-card">
+          <span class="io-num">13</span>
+          <span class="io-label">库存正常</span>
+        </div>
+        <div class="io-card">
+          <span class="io-num">¥1,860</span>
+          <span class="io-label">本月耗材支出</span>
+        </div>
+      </div>
+
+      <div class="seg-bar" id="invSeg">
+        <span class="seg on" data-cat="all">全部</span>
+        <span class="seg" data-cat="wash">洗护</span>
+        <span class="seg" data-cat="dye">染烫</span>
+        <span class="seg" data-cat="tool">工具设备</span>
+      </div>
+
+      <div id="invList" class="inv-list"></div>
+      <div class="page-end">库存随记账自动扣减，也可盘点后手动调整</div>
+    </section>
+
+    <!-- ========== ⑤ 经营分析（脑） ========== -->
+    <section class="page" id="page-insights">
+      <header class="sub-header">
+        <h2>经营参谋</h2>
+        <p>基于本店流水与商圈大盘，只给稳当的建议</p>
+      </header>
+
+      <div class="gauge-row">
+        <div class="gauge-box" id="gaugeBox"></div>
+        <div class="gauge-note">
+          <div class="gn-title">经营健康分 <em>良好</em></div>
+          <ul>
+            <li>客流稳定增长，高于商圈均值</li>
+            <li>客单价略低，有温和提升空间</li>
+            <li class="risk">耗材库存与客户流失需尽快处理</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="seg-bar soft" id="insightSeg">
+        <span class="seg on" data-period="month">本月</span>
+        <span class="seg" data-period="quarter">近 3 月</span>
+        <span class="seg" data-period="year">近一年</span>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><span>营业收入(元)</span><b id="kpiRev">38,642</b><em class="up">同比 +12.4%</em></div>
+        <div class="kpi"><span>客单价(元)</span><b>58.6</b><em class="up">同比 +3.1%</em></div>
+        <div class="kpi"><span>到店客流</span><b>659<small>人次</small></b><em class="up">同比 +9.0%</em></div>
+        <div class="kpi"><span>会员复购率</span><b>64<small>%</small></b><em class="flat">同比 +1.2pt</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>营收同比</h3><span class="legend"><i class="lg this"></i>今年 <i class="lg last"></i>去年</span></div>
+        <div id="revChart" class="chart-box"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>商圈竞品对比</h3>
+          <span class="panel-source">美团 / 大众点评公开数据 · 脱敏示意</span>
+        </div>
+        <div class="cmp-group">
+          <div class="cmp-g-title">洗剪吹定价（元）</div>
+          <div class="cmp-row"><span class="cmp-name">本店</span><div class="cmp-track"><i style="width:63%"></i></div><b>38</b></div>
+          <div class="cmp-row rival"><span class="cmp-name">商圈均价</span><div class="cmp-track"><i style="width:77%"></i></div><b>46</b></div>
+          <div class="cmp-row rival"><span class="cmp-name">头部门店</span><div class="cmp-track"><i style="width:98%"></i></div><b>58</b></div>
+        </div>
+        <div class="cmp-group">
+          <div class="cmp-g-title">月销量（单）</div>
+          <div class="cmp-row"><span class="cmp-name">本店</span><div class="cmp-track"><i style="width:59%"></i></div><b>659</b></div>
+          <div class="cmp-row rival"><span class="cmp-name">同类均值</span><div class="cmp-track"><i style="width:43%"></i></div><b>480</b></div>
+          <div class="cmp-row rival"><span class="cmp-name">头部门店</span><div class="cmp-track"><i style="width:100%"></i></div><b>1,120</b></div>
+        </div>
+        <div class="cmp-tags">
+          <span>本店评分 <b>4.8</b> ｜ 商圈均值 4.6</span>
+          <span>好评关键词：<em>不推销 · 手艺稳 · 干净</em></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>保守性经营建议</h3><span class="panel-more">策略风格 · 稳健</span></div>
+        <div class="advice-card">
+          <div class="adv-top"><span class="adv-tag tag-go">定价</span><span class="adv-conf">依据充分 · 建议执行</span></div>
+          <p class="adv-text">建议维持洗剪吹 <b>38 元</b> 引流价不动，通过「剪后护理 19.9 元体验」温和提升客单价，<b>暂不建议直接涨价</b>。</p>
+          <div class="adv-reason">依据：近 3 月客流同比 +9%，但客单价仅为商圈头部门店的 66%，贸然涨价可能影响客流基本盘。</div>
+        </div>
+        <div class="advice-card">
+          <div class="adv-top"><span class="adv-tag tag-huo">库存</span><span class="adv-conf">紧急 · 本周内</span></div>
+          <p class="adv-text">染发膏（自然黑）仅余 15%，按当前消耗速度 <b>约 8 天断货</b>，建议补货 10 支（约 ¥320），仍在本月耗材预算内。</p>
+          <div class="adv-reason">依据：库存流水扣减 + 近 8 周染烫项目排期。</div>
+          <button class="adv-btn" data-go="inventory">一键生成采购单</button>
+        </div>
+        <div class="advice-card">
+          <div class="adv-top"><span class="adv-tag tag-ke">客户</span><span class="adv-conf">低成本试错</span></div>
+          <p class="adv-text">12 位熟客有流失风险，建议<b>只向这 12 人</b>发 5 元关怀券（总预算 ≤ ¥200），不做全员大促，避免侵蚀正常利润。</p>
+          <div class="adv-reason">依据：熟客复购率 64%，历史唤回券核销率 31%，小范围投放即可覆盖预期回流。</div>
+          <button class="adv-btn" data-go="customers">查看流失名单</button>
+        </div>
+      </div>
+      <div class="page-end">建议由经营模型基于本店数据生成，最终决策由店主把握</div>
+    </section>
+
+  </main>
+
+  <!-- ============ 底部 Tab ============ -->
+  <nav class="tabbar">
+    <div class="tab on" data-tab="home">
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+      <span>首页</span>
+    </div>
+    <div class="tab" data-tab="customers">
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20c0-3.6 3.4-5.5 7.5-5.5s7.5 1.9 7.5 5.5"/></svg>
+      <span>客户</span>
+    </div>
+    <div class="tab tab-center" data-tab="ledger">
+      <span class="tab-fab">
+        <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="#fff" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11v.5a6.5 6.5 0 0013 0V11"/><path d="M12 18v3.5"/></svg>
+      </span>
+      <span>记账</span>
+    </div>
+    <div class="tab" data-tab="inventory">
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      <span>库存</span>
+    </div>
+    <div class="tab" data-tab="insights">
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-4"/><path d="M13 16V8"/><path d="M18 16v-6"/></svg>
+      <span>参谋</span>
+    </div>
+  </nav>
+
+  <!-- 弹层容器 -->
+  <div class="mask" id="mask"></div>
+  <div class="sheet" id="sheet"></div>
+  <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast"></div>
+
+</div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
