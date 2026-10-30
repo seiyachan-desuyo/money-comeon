@@ -93,3 +93,81 @@ const REVENUE = {
     lastYear:[28100,22600,27400,29800,31900,30600,32800,31300,33200,34380],
   },
 };
+
+/* ============================================================
+   财务健康模块 · 三大报表轻量演示数据（虚构）
+   ============================================================ */
+
+// ① 利润表（本月赚了多少）—— 支持 月/季/年 切换
+const PL_DATA = {
+  month:{
+    label:'本月（10月）',
+    income:[
+      { name:'剪发 / 洗剪吹', amount:16800 },
+      { name:'染烫项目',      amount:12400 },
+      { name:'护理项目',      amount:5842.5 },
+      { name:'儿童及其他',    amount:3600 },
+    ],
+    cost:[
+      { name:'耗材成本', amount:4210 },
+      { name:'门店房租', amount:6000 },
+      { name:'人工提成', amount:12000 },
+    ],
+  },
+  quarter:{
+    label:'近 3 月（8–10月）',
+    income:[
+      { name:'剪发 / 洗剪吹', amount:47200 },
+      { name:'染烫项目',      amount:34800 },
+      { name:'护理项目',      amount:16420 },
+      { name:'儿童及其他',    amount:10000 },
+    ],
+    cost:[
+      { name:'耗材成本', amount:11860 },
+      { name:'门店房租', amount:18000 },
+      { name:'人工提成', amount:33000 },
+    ],
+  },
+  year:{
+    label:'近一年（11月–至今）',
+    income:[
+      { name:'剪发 / 洗剪吹', amount:178600 },
+      { name:'染烫项目',      amount:132400 },
+      { name:'护理项目',      amount:62680 },
+      { name:'儿童及其他',    amount:39000 },
+    ],
+    cost:[
+      { name:'耗材成本', amount:46800 },
+      { name:'门店房租', amount:72000 },
+      { name:'人工提成', amount:128000 },
+    ],
+  },
+};
+
+// ② 资产负债表（家底清单）—— 月底快照
+const BS_DATA = {
+  snapshotDate:'10月31日月底快照',
+  assets:[
+    { name:'现金 / 银行账户', amount:86420, note:'工行对公 + 收款码' },
+    { name:'库存耗材',        amount:8650,  note:'18 种耗材按采购价' },
+    { name:'会员储值卡',      amount:9860,  note:'34 位会员待核销' },
+  ],
+  liabilities:[
+    { name:'供货商应付', amount:3260, note:'美业一站采 · 账期 7 天' },
+  ],
+};
+
+// ③ 现金流量表（钱从哪来花哪去）—— 本月
+const CF_DATA = {
+  label:'本月（10月）',
+  inflow:[
+    { name:'营业收款',   amount:40620 },
+    { name:'储值卡充值', amount:1560 },
+  ],
+  outflow:[
+    { name:'采购耗材', amount:4210 },
+    { name:'门店房租', amount:6000 },
+    { name:'人工提成', amount:12000 },
+    { name:'其他支出', amount:1860 },
+  ],
+};

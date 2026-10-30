@@ -471,4 +471,137 @@ $('#insightSeg').addEventListener('click', e=>{
 if ($('#page-insights').classList.contains('on')) renderRevChart();
 window.addEventListener('resize', ()=>{ if ($('#page-insights').classList.contains('on')) renderRevChart(); });
 
+/* ---------------- 财务健康：三大报表轻量版 ---------------- */
+const fmtY = v => v.toLocaleString('zh-CN',{minimumFractionDigits:(Number(v)===v && v%1?2:0),maximumFractionDigits:2});
+const sumAmt = arr => arr.reduce((s,x)=>s+x.amount,0);
+/* 条形进场动画（下一帧给宽度） */
+function animateFinBars(sel){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    $$(sel).forEach(b=>{ b.style.width = b.dataset.w + '%'; });
+  }));
+}
+
+/* ① 利润表：本月赚了多少（月/季/年切换） */
+function renderPL(period){
+  const d = PL_DATA[period];
+  const incTotal = sumAmt(d.income), costTotal = sumAmt(d.cost);
+  const gross = incTotal - costTotal;
+  const rate = (gross/incTotal*100).toFixed(1);
+  $('#finContent').innerHTML = `
+    <div class="fin-pane">
+      <div class="fin-mini-seg" id="plPeriod">
+        ${[['month','月'],['quarter','季'],['year','年']].map(([k,t])=>
+          `<span class="seg ${k===period?'on':''}" data-p="${k}">${t}</span>`).join('')}
+      </div>
+      <div class="fin-block">收入明细<span class="fin-hint">${d.label}</span></div>
+      ${d.income.map(x=>`
+        <div class="fin-row">
+          <span class="fr-name">${x.name}</span>
+          <span class="fin-bar"><i data-w="${(x.amount/incTotal*100).toFixed(1)}"></i></span>
+          <span class="fr-val">¥${fmtY(x.amount)}</span>
+        </div>`).join('')}
+      <div class="fin-subtotal"><span>营业收入合计</span><b>¥${fmtY(incTotal)}</b></div>
+      <div class="fin-block" style="margin-top:10px">减：成本费用</div>
+      ${d.cost.map(x=>`
+        <div class="fin-row">
+          <span class="fr-name">${x.name}</span>
+          <span class="fr-val cost" data-sign="−">¥${fmtY(x.amount)}</span>
+        </div>`).join('')}
+      <div class="fin-subtotal"><span>成本费用合计</span><b>−¥${fmtY(costTotal)}</b></div>
+      <div class="fin-gross">
+        <div>
+          <div class="fg-label">毛利润</div>
+          <div class="fg-sub">营业收入 − 成本费用</div>
+        </div>
+        <div style="text-align:right">
+          <div class="fg-num">¥${fmtY(gross)}<small>元</small></div>
+          <div class="fg-rate">利润率 ${rate}%</div>
+        </div>
+      </div>
+    </div>`;
+  animateFinBars('#finContent .fin-bar i');
+  $('#plPeriod').addEventListener('click', e=>{
+    const seg = e.target.closest('.seg'); if (!seg) return;
+    renderPL(seg.dataset.p);
+  });
+}
+
+/* ② 资产负债表：家底清单（月底快照） */
+function renderBS(){
+  const a = sumAmt(BS_DATA.assets), l = sumAmt(BS_DATA.liabilities);
+  const net = a - l;
+  const group = (title, items, sum, cls)=>`
+    <div class="bs-group ${cls}">
+      <div class="bs-g-head"><span class="dot"></span>${title}
+        <span class="g-sum">¥${fmtY(sum)}</span></div>
+      ${items.map(x=>`
+        <div class="bs-row">
+          <div><div class="br-name">${x.name}</div><div class="br-note">${x.note}</div></div>
+          <span class="br-val">¥${fmtY(x.amount)}</span>
+        </div>`).join('')}
+    </div>`;
+  $('#finContent').innerHTML = `
+    <div class="fin-pane">
+      ${group('资产', BS_DATA.assets, a, 'asset')}
+      ${group('负债', BS_DATA.liabilities, l, 'liab')}
+      <div class="bs-net">
+        <div>
+          <div class="bn-label">净资产（家底）</div>
+          <div class="bn-sub">资产 − 负债 · ${BS_DATA.snapshotDate}</div>
+        </div>
+        <div class="bn-num">¥${fmtY(net)}<small>元</small></div>
+      </div>
+    </div>`;
+}
+
+/* ③ 现金流量表：钱从哪来花哪去（收支对比条） */
+function renderCF(){
+  const tin = sumAmt(CF_DATA.inflow), tout = sumAmt(CF_DATA.outflow);
+  const net = tin - tout, max = Math.max(tin, tout);
+  $('#finContent').innerHTML = `
+    <div class="fin-pane">
+      <div class="cf-compare">
+        <div class="cf-bar-row">
+          <span class="cf-tag in">流入</span>
+          <span class="cf-track"><i class="in-fill" data-w="${(tin/max*100).toFixed(1)}"></i></span>
+          <span class="cf-amt in">¥${fmtY(tin)}</span>
+        </div>
+        <div class="cf-bar-row">
+          <span class="cf-tag out">流出</span>
+          <span class="cf-track"><i class="out-fill" data-w="${(tout/max*100).toFixed(1)}"></i></span>
+          <span class="cf-amt out">¥${fmtY(tout)}</span>
+        </div>
+      </div>
+      <div class="fin-block">钱从哪来 · ${CF_DATA.label}</div>
+      ${CF_DATA.inflow.map(x=>`
+        <div class="fin-row"><span class="fr-name">${x.name}</span>
+          <span class="fr-val" style="color:var(--gold-deep)">+¥${fmtY(x.amount)}</span></div>`).join('')}
+      <div class="fin-block" style="margin-top:8px">花哪去了</div>
+      ${CF_DATA.outflow.map(x=>`
+        <div class="fin-row"><span class="fr-name">${x.name}</span>
+          <span class="fr-val cost">−¥${fmtY(x.amount)}</span></div>`).join('')}
+      <div class="cf-net" style="margin-top:10px">
+        <div>
+          <div class="cn-label">本月净现金流</div>
+          <div class="cn-sub">流入 − 流出，为正说明账上钱在变多</div>
+        </div>
+        <div class="cn-num">+¥${fmtY(net)}</div>
+      </div>
+    </div>`;
+  animateFinBars('#finContent .cf-track i');
+}
+
+/* 三表 Tab 切换 */
+function renderFinance(tab){
+  if (tab === 'pl') renderPL('month');
+  else if (tab === 'bs') renderBS();
+  else renderCF();
+}
+$('#finSeg').addEventListener('click', e=>{
+  const seg = e.target.closest('.seg'); if (!seg) return;
+  $$('#finSeg .seg').forEach(s=>s.classList.toggle('on', s===seg));
+  renderFinance(seg.dataset.fin);
+});
+renderFinance('pl');
+
 }).call(this);
