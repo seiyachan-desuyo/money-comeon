@@ -1,5 +1,6 @@
 /* ============================================================
    来钱花 · 纯 SVG 图表（无外部依赖，离线可用）
+   配色：白金体系（亮金 #F0B429 + 浅灰网格）
    ============================================================ */
 const Charts = (function(){
 
@@ -30,11 +31,11 @@ const Charts = (function(){
     const grid = 4;
     for (let g = 0; g <= grid; g++){
       const gy = padT + ih * g / grid;
-      svg.appendChild(el('line',{ x1:padL, y1:gy, x2:W-padR, y2:gy, stroke:'#EDE7D8','stroke-width':1,'stroke-dasharray': g===grid?'0':'3 4' }));
+      svg.appendChild(el('line',{ x1:padL, y1:gy, x2:W-padR, y2:gy, stroke:'#EEF1F5','stroke-width':1,'stroke-dasharray': g===grid?'0':'3 4' }));
     }
     // X 轴标签
     labels.forEach((t, i) => {
-      const t1 = el('text',{ x:x(i), y:H-7, 'text-anchor':'middle', 'font-size':10, fill:'#8A7E66' });
+      const t1 = el('text',{ x:x(i), y:H-7, 'text-anchor':'middle', 'font-size':10, fill:'#9AA3B2' });
       t1.textContent = t; svg.appendChild(t1);
     });
 
@@ -45,14 +46,28 @@ const Charts = (function(){
         const gid = 'lg'+Math.random().toString(36).slice(2,8);
         const defs = el('defs',{});
         const grad = el('linearGradient',{id:gid, x1:0,y1:0,x2:0,y2:1});
-        grad.innerHTML = `<stop offset="0" stop-color="${s.color}" stop-opacity=".22"/><stop offset="1" stop-color="${s.color}" stop-opacity="0"/>`;
+        grad.innerHTML = `<stop offset="0" stop-color="${s.color}" stop-opacity=".18"/><stop offset="1" stop-color="${s.color}" stop-opacity="0"/>`;
         defs.appendChild(grad); svg.appendChild(defs);
         const area = `${line} L ${pts[pts.length-1][0]} ${padT+ih} L ${pts[0][0]} ${padT+ih} Z`;
         svg.appendChild(el('path',{ d:area, fill:`url(#${gid})` }));
       }
-      svg.appendChild(el('path',{ d:line, fill:'none', stroke:s.color, 'stroke-width': si===0 ? 2.4 : 1.8,
+      // 路径进场动画
+      const path = el('path',{ d:line, fill:'none', stroke:s.color, 'stroke-width': si===0 ? 2.4 : 1.8,
         'stroke-linecap':'round','stroke-linejoin':'round',
-        'stroke-dasharray': si===0 ? '0' : '4 4' }));
+        'stroke-dasharray': si===0 ? '0' : '4 4' });
+      svg.appendChild(path);
+      if (!si){
+        try{
+          const len = path.getTotalLength();
+          path.style.transition = 'stroke-dashoffset .7s ease';
+          path.setAttribute('stroke-dasharray', len);
+          path.setAttribute('stroke-dashoffset', len);
+          requestAnimationFrame(()=> requestAnimationFrame(()=>{
+            path.setAttribute('stroke-dashoffset', 0);
+            setTimeout(()=> path.setAttribute('stroke-dasharray','0'), 720);
+          }));
+        }catch(e){ path.setAttribute('stroke-dasharray','0'); }
+      }
       pts.forEach((p,i)=>{
         if (si===0 && i===pts.length-1){
           svg.appendChild(el('circle',{cx:p[0],cy:p[1],r:4.5,fill:'#fff',stroke:s.color,'stroke-width':2.4}));
@@ -67,10 +82,10 @@ const Charts = (function(){
       svg.appendChild(tt);
     });
 
-    // 触摸提示点
-    const tipDot = el('circle',{r:4,fill:'#D4A017',stroke:'#fff','stroke-width':2,visibility:'hidden'});
-    const tipBg = el('rect',{rx:5,ry:5,fill:'#2B2417',visibility:'hidden'});
-    const tipTx = el('text',{'font-size':9.5,fill:'#F3E2B0','text-anchor':'middle',visibility:'hidden'});
+    // 触摸提示点（白底浮层）
+    const tipDot = el('circle',{r:4,fill:'#F0B429',stroke:'#fff','stroke-width':2,visibility:'hidden'});
+    const tipBg = el('rect',{rx:6,ry:6,fill:'#FFFFFF',stroke:'#E6EAF0','stroke-width':1,visibility:'hidden'});
+    const tipTx = el('text',{'font-size':9.5,fill:'#4E5969','text-anchor':'middle','font-weight':600,visibility:'hidden'});
     svg.appendChild(tipBg); svg.appendChild(tipTx); svg.appendChild(tipDot);
 
     const mainPts = series[0].data.map((v,i)=>[x(i),y(v),v]);
@@ -82,7 +97,7 @@ const Charts = (function(){
       tipDot.setAttribute('cx',nearest[0]); tipDot.setAttribute('cy',nearest[1]); tipDot.setAttribute('visibility','visible');
       const label = (nearest[2]).toLocaleString()+'元';
       tipTx.textContent = label;
-      const tw = label.length * 6.2 + 12;
+      const tw = label.length * 6.2 + 14;
       let bx = Math.max(2, Math.min(W-tw-2, nearest[0]-tw/2));
       tipBg.setAttribute('x',bx); tipBg.setAttribute('y',Math.max(2,nearest[1]-24));
       tipBg.setAttribute('width',tw); tipBg.setAttribute('height',17);
@@ -103,12 +118,12 @@ const Charts = (function(){
     const pts = data.map((v,i)=>[x(i),y(v)]);
     const d = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
     const active = data[data.length-1] > 0;
-    const stroke = color || (active ? '#D4A017' : '#C9BFA6');
+    const stroke = color || (active ? '#F0B429' : '#D2D8E1');
     container.innerHTML =
       `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
          <path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
          <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="2.6"
-           fill="${active?'#fff':'#E4DCCB'}" stroke="${stroke}" stroke-width="1.6"/>
+           fill="${active?'#fff':'#E9EDF2'}" stroke="${stroke}" stroke-width="1.6"/>
        </svg>`;
   }
 
@@ -123,34 +138,49 @@ const Charts = (function(){
       const x = i*(bw+gap), y = H-padB-h;
       const isLast = i === data.length-1;
       bars += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="3"
-        fill="${v===0?'#E8E1D0':(isLast?'url(#barG)':'#E2C26B')}"/>`;
-      bars += `<text x="${x+bw/2}" y="${H-5}" text-anchor="middle" font-size="9" fill="#A89B7C">${labels[i]}</text>`;
+        fill="${v===0?'#EFF1F4':(isLast?'url(#barG)':'#F9DE97')}"/>`;
+      bars += `<text x="${x+bw/2}" y="${H-5}" text-anchor="middle" font-size="9" fill="#9AA3B2">${labels[i]}</text>`;
     });
     container.innerHTML =
       `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">
         <defs><linearGradient id="barG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#E6BE4E"/><stop offset="1" stop-color="#B8860B"/>
+          <stop offset="0" stop-color="#FFD166"/><stop offset="1" stop-color="#F0B429"/>
         </linearGradient></defs>${bars}
       </svg>`;
   }
 
-  /* ---------- 环形健康分 ---------- */
+  /* ---------- 环形健康分（进场描边 + 数字滚动） ---------- */
   function gauge(container, value){
     const R = 46, C = 2*Math.PI*R;
     const dash = (value/100*C).toFixed(1);
     container.innerHTML =
       `<svg viewBox="0 0 116 116" width="108" height="108">
-        <circle cx="58" cy="58" r="${R}" fill="none" stroke="#F0EBDE" stroke-width="9"/>
-        <circle cx="58" cy="58" r="${R}" fill="none" stroke="url(#gg)" stroke-width="9"
-          stroke-linecap="round" stroke-dasharray="${dash} ${C}"
-          transform="rotate(-90 58 58)"/>
         <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#E6BE4E"/><stop offset="1" stop-color="#B8860B"/>
+          <stop offset="0" stop-color="#FFD166"/><stop offset="1" stop-color="#F0B429"/>
         </linearGradient></defs>
-        <g class="gauge-score">
-        </g>
+        <circle class="gauge-track" cx="58" cy="58" r="${R}" fill="none" stroke="#F0F2F5" stroke-width="9"/>
+        <circle class="gauge-arc" cx="58" cy="58" r="${R}" fill="none" stroke="url(#gg)" stroke-width="9"
+          stroke-linecap="round" stroke-dasharray="0 ${C}"
+          transform="rotate(-90 58 58)"/>
       </svg>
-      <div class="gauge-score"><b>${value}</b><span>健康分 / 100</span></div>`;
+      <div class="gauge-score"><b id="gaugeNum">0</b><span>健康分 / 100</span></div>`;
+    // 描边动画
+    requestAnimationFrame(()=> requestAnimationFrame(()=>{
+      const arc = container.querySelector('.gauge-arc');
+      if (arc){
+        arc.style.transition = 'stroke-dasharray 1s cubic-bezier(.22,1,.36,1)';
+        arc.setAttribute('stroke-dasharray', `${dash} ${C}`);
+      }
+      const num = container.querySelector('#gaugeNum');
+      const t0 = performance.now(), dur = 1000;
+      function tick(t){
+        const p = Math.min(1, (t - t0) / dur);
+        const e = 1 - Math.pow(1 - p, 3);
+        num.textContent = Math.round(value * e);
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }));
   }
 
   return { lineChart, sparkline, barTrend, gauge };

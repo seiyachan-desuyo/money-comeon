@@ -13,9 +13,9 @@
   <div class="splash-logo">
     <svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true">
       <defs><linearGradient id="spG" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#E9C460"/><stop offset="1" stop-color="#B8860B"/>
+        <stop offset="0" stop-color="#FFD166"/><stop offset="1" stop-color="#F0B429"/>
       </linearGradient></defs>
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#spG)"/>
+      <rect x="2" y="2" width="44" height="44" rx="14" fill="url(#spG)"/>
       <text x="24" y="33" text-anchor="middle" font-size="26" fill="#fff" font-family="Songti SC, STSong, serif" font-weight="700">来</text>
     </svg>
   </div>
@@ -31,9 +31,9 @@
   <div class="statusbar">
     <span class="sb-time">9:41</span>
     <span class="sb-icons">
-      <svg viewBox="0 0 18 12" width="17" height="11"><g fill="#2B2417"><rect x="0" y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
-      <svg viewBox="0 0 16 12" width="16" height="11" fill="none" stroke="#2B2417" stroke-width="1.4"><path d="M1 4.2C5.1.8 10.9.8 15 4.2M3.3 7c2.4-2 7-2 9.4 0M5.8 9.7c1.3-1 3.1-1 4.4 0"/></svg>
-      <svg viewBox="0 0 26 12" width="25" height="11"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="#2B2417" opacity=".45"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="#2B2417"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="#2B2417" opacity=".45"/></svg>
+      <svg viewBox="0 0 18 12" width="17" height="11"><g fill="#1F2329"><rect x="0" y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+      <svg viewBox="0 0 16 12" width="16" height="11" fill="none" stroke="#1F2329" stroke-width="1.4"><path d="M1 4.2C5.1.8 10.9.8 15 4.2M3.3 7c2.4-2 7-2 9.4 0M5.8 9.7c1.3-1 3.1-1 4.4 0"/></svg>
+      <svg viewBox="0 0 26 12" width="25" height="11"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="#1F2329" opacity=".4"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="#1F2329"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="#1F2329" opacity=".4"/></svg>
     </span>
   </div>
 
@@ -42,16 +42,40 @@
 
     <!-- ========== ① 首页 / 总览（钱） ========== -->
     <section class="page on" id="page-home">
-      <header class="home-top">
-        <div>
-          <div class="shop-name">星心理发店 · 望京店
-            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6l4 4 4-4"/></svg>
+
+      <!-- 金色弥散渐变 Header + 几何插画 Banner -->
+      <header class="home-hero">
+        <div class="hero-row">
+          <div>
+            <div class="shop-name">星心理发店 · 望京店
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6l4 4 4-4"/></svg>
+            </div>
+            <div class="hello">早上好，张老板，今天是 10 月 30 日 周五</div>
           </div>
-          <div class="hello">早上好，张老板，今天是 10 月 30 日 周五</div>
+          <div class="bell" data-tip="2 条待办">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1F2329" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg>
+            <i class="bell-dot"></i>
+          </div>
         </div>
-        <div class="bell" data-tip="2 条待办">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2B2417" stroke-width="1.7"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/></svg>
-          <i class="bell-dot"></i>
+        <div class="hero-banner">
+          <div class="hb-text">
+            <span class="hb-tag">AI 经营提示</span>
+            <div class="hb-title">今日经营态势向好</div>
+            <div class="hb-desc">收入较昨日同时段 +8.2%<br/>有 2 件小事待你处理</div>
+          </div>
+          <!-- 金色系几何插画 -->
+          <svg class="hb-art" viewBox="0 0 120 96" width="108" aria-hidden="true">
+            <circle cx="88" cy="32" r="25" fill="#FFD877"/>
+            <circle cx="88" cy="32" r="13" fill="#FFF9E8"/>
+            <circle cx="88" cy="32" r="5.5" fill="#F0B429"/>
+            <path d="M20 80 L44 38 L68 80 Z" fill="#F0B429"/>
+            <path d="M44 64 L56 44 L68 64 Z" fill="#FFE7AE"/>
+            <circle cx="29" cy="26" r="6.5" fill="#F7C954"/>
+            <circle cx="58" cy="15" r="4" fill="#EAC56F"/>
+            <rect x="82" y="62" width="8" height="18" rx="2.5" fill="#F6C344"/>
+            <rect x="95" y="52" width="8" height="28" rx="2.5" fill="#F0B429"/>
+            <path d="M12 64 Q26 50 40 60" fill="none" stroke="#E9C063" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 7"/>
+          </svg>
         </div>
       </header>
 
@@ -89,19 +113,42 @@
         </div>
       </div>
 
-      <!-- 钱客货脑 四层框架 -->
+      <!-- 钱客货脑 四层框架（彩色面性图标） -->
       <div class="layer-strip">
         <div class="layer-item" data-go="ledger">
-          <span class="layer-ic ic-qian">钱</span><span class="layer-tx">记账对账</span>
+          <span class="layer-ic ic-qian">
+            <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="6" width="18" height="13" rx="3.5"/>
+              <path d="M3 9.6h18" stroke="#FEF3D2" stroke-width="1.6"/>
+              <rect x="14.8" y="12.4" width="4.6" height="2.8" rx="1" fill="#FEF3D2"/>
+            </svg>
+          </span><span class="layer-tx">记账对账</span>
         </div>
         <div class="layer-item" data-go="customers">
-          <span class="layer-ic ic-ke">客</span><span class="layer-tx">熟客经营</span>
+          <span class="layer-ic ic-ke">
+            <svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+              <circle cx="9" cy="8.6" r="3.1" fill="currentColor" stroke="none"/>
+              <path d="M3.2 19.2c0-3.4 2.9-5.3 5.8-5.3s5.8 1.9 5.8 5.3z" fill="currentColor" stroke="none"/>
+              <path d="M15.7 6.4a2.8 2.8 0 0 1 0 4.6M17.2 14.1c1.8.6 3.1 2 3.1 5.1h-2.8" stroke-linecap="round"/>
+            </svg>
+          </span><span class="layer-tx">熟客经营</span>
         </div>
         <div class="layer-item" data-go="inventory">
-          <span class="layer-ic ic-huo">货</span><span class="layer-tx">耗材库存</span>
+          <span class="layer-ic ic-huo">
+            <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true">
+              <path d="M12 2.6 20.8 7v10L12 21.4 3.2 17V7z"/>
+              <path d="M3.2 7 12 11.4 20.8 7M12 11.4V21.3" fill="none" stroke="#E7F8EF" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M7.7 4.6 12 6.9l4.3-2.3" fill="none" stroke="#E7F8EF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span><span class="layer-tx">耗材库存</span>
         </div>
         <div class="layer-item" data-go="insights">
-          <span class="layer-ic ic-nao">脑</span><span class="layer-tx">经营参谋</span>
+          <span class="layer-ic ic-nao">
+            <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true">
+              <path d="M9 21h6v-1.6H9z" opacity=".65"/>
+              <path d="M12 2a6.6 6.6 0 0 0-3.9 11.9c.6.5 1 1.2 1 2v.6h5.8v-.6c0-.8.4-1.5 1-2A6.6 6.6 0 0 0 12 2z"/>
+            </svg>
+          </span><span class="layer-tx">经营参谋</span>
         </div>
       </div>
 
@@ -113,7 +160,7 @@
         </div>
         <div class="todo-item" data-go="inventory">
           <span class="todo-ic todo-danger">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
           </span>
           <div class="todo-body">
             <div class="todo-title">低库存 · 染发膏（自然黑）</div>
@@ -123,7 +170,7 @@
         </div>
         <div class="todo-item" data-go="customers">
           <span class="todo-ic todo-warn">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
           </span>
           <div class="todo-body">
             <div class="todo-title">流失预警 · 王秀兰 等 12 位熟客</div>
@@ -156,7 +203,7 @@
         <div class="voice-ring r1"></div>
         <div class="voice-ring r2"></div>
         <button class="mic-btn" id="micBtn" aria-label="语音记账">
-          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0014 0v-1"/><path d="M12 18v4"/></svg>
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#fff" stroke-width="1.9"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0014 0v-1"/><path d="M12 18v4"/></svg>
         </button>
         <div class="voice-tip">点击开始语音记账</div>
         <div class="voice-chips">
@@ -165,11 +212,11 @@
         </div>
         <div class="voice-entry-row">
           <button class="entry-btn" id="shotBtn">
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="5" width="20" height="14" rx="2.5"/><circle cx="12" cy="12" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>
             截图识别记账
           </button>
           <button class="entry-btn ghost" id="manualBtn">
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
             手动记一笔
           </button>
           <input type="file" id="shotFile" accept="image/*" hidden />
@@ -201,7 +248,7 @@
       </div>
 
       <div class="searchbar">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#A89B7C" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#86909C" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5" stroke-linecap="round"/></svg>
         <input id="custSearch" placeholder="搜索客户姓名 / 手机号" />
       </div>
 
@@ -225,8 +272,8 @@
             <p>18 种耗材 · 5 种低于安全库存</p>
           </div>
           <button class="cart-btn" id="cartBtn">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.4 12.4a1.5 1.5 0 001.5 1.2h8.3a1.5 1.5 0 001.5-1.2L22 7H6"/></svg>
-            <i id="cartCount" class="cart-count">0</i>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.4 12.4a1.5 1.5 0 001.5 1.2h8.3a1.5 1.5 0 001.5-1.2L22 7H6" stroke-linecap="round"/></svg>
+            <i id="cartCount" class="cart-count zero">0</i>
           </button>
         </div>
       </header>
@@ -246,7 +293,7 @@
         </div>
       </div>
 
-      <div class="seg-bar" id="invSeg">
+      <div class="seg-bar soft" id="invSeg">
         <span class="seg on" data-cat="all">全部</span>
         <span class="seg" data-cat="wash">洗护</span>
         <span class="seg" data-cat="dye">染烫</span>
@@ -345,25 +392,25 @@
   <!-- ============ 底部 Tab ============ -->
   <nav class="tabbar">
     <div class="tab on" data-tab="home">
-      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 10.5L12 3l9 7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V21h14V9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 21v-6h5v6"/></svg>
       <span>首页</span>
     </div>
     <div class="tab" data-tab="customers">
-      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20c0-3.6 3.4-5.5 7.5-5.5s7.5 1.9 7.5 5.5"/></svg>
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20c0-3.6 3.4-5.5 7.5-5.5s7.5 1.9 7.5 5.5" stroke-linecap="round"/></svg>
       <span>客户</span>
     </div>
     <div class="tab tab-center" data-tab="ledger">
-      <span class="tab-fab">
-        <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="#fff" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11v.5a6.5 6.5 0 0013 0V11"/><path d="M12 18v3.5"/></svg>
+      <span class="tab-fab" id="tabFab">
+        <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="#fff" stroke-width="2.1"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11v.5a6.5 6.5 0 0013 0V11" stroke-linecap="round"/><path d="M12 18v3.5" stroke-linecap="round"/></svg>
       </span>
       <span>记账</span>
     </div>
     <div class="tab" data-tab="inventory">
-      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 8l-9-5-9 5 9 5 9-5z" stroke-linejoin="round"/><path d="M3 8v8l9 5 9-5V8" stroke-linejoin="round"/><path d="M12 13v8" stroke-linecap="round"/></svg>
       <span>库存</span>
     </div>
     <div class="tab" data-tab="insights">
-      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-4"/><path d="M13 16V8"/><path d="M18 16v-6"/></svg>
+      <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-4"/><path d="M13 16V8"/><path d="M18 16v-6"/></svg>
       <span>参谋</span>
     </div>
   </nav>

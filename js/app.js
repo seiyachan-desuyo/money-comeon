@@ -6,16 +6,61 @@
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
+/* ---------------- 数字滚动累加（进场/更新） ---------------- */
+function animateNum(el, to, decimals, duration){
+  if (!el) return;
+  decimals = decimals == null ? 2 : decimals;
+  duration = duration || 750;
+  const from = parseFloat(el.dataset.val);
+  const start = isNaN(from) ? 0 : from;
+  el.dataset.val = to;
+  const fmt = v => v.toLocaleString('zh-CN',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+  const t0 = performance.now();
+  (function tick(t){
+    const p = Math.min(1,(t-t0)/duration);
+    const e = 1 - Math.pow(1-p,3); // easeOutCubic
+    el.textContent = fmt(start + (to-start)*e);
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+/* 首页金额：启动屏期间归零，进场时滚动到真实值 */
+(function initAmounts(){
+  const todayEl = $('#homeTodayAmount'), monthEl = $('#homeMonthAmount');
+  const initToday = parseFloat(todayEl.textContent.replace(/,/g,''));
+  const initMonth = parseFloat(monthEl.textContent.replace(/,/g,''));
+  todayEl.dataset.val = 0; monthEl.dataset.val = 0;
+  todayEl.textContent = monthEl.textContent = (0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  setTimeout(()=>{
+    animateNum(todayEl, initToday, 2, 900);
+    animateNum(monthEl, initMonth, 2, 1000);
+  }, 620);
+})();
+/* 按下扩散光环（语音钮 / 中间凸起 Tab） */
+function bindTapRipple(el){
+  el.addEventListener('pointerdown', ()=>{
+    el.classList.remove('tap'); void el.offsetWidth;
+    el.classList.add('tap');
+    setTimeout(()=>el.classList.remove('tap'), 600);
+  });
+}
+
 /* ---------------- 启动屏 & Tab ---------------- */
 setTimeout(()=> $('#splash').classList.add('off'), 1150);
 
 const TABS = ['home','ledger','customers','inventory','insights'];
+let insightInited = false;
 function go(tab){
   if (!TABS.includes(tab)) return;
   $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
   $$('.page').forEach(p => p.classList.toggle('on', p.id === 'page-' + tab));
-  // 切到分析页时确保图表按容器宽度重绘
-  if (tab === 'insights') renderRevChart();
+  // 切到分析页时确保图表按容器宽度重绘；首次进入时 KPI 数字滚动
+  if (tab === 'insights'){
+    renderRevChart();
+    if (!insightInited){
+      insightInited = true;
+      animateNum($('#kpiRev'), 38642, 0, 850);
+    }
+  }
   $('#screen').scrollTop = 0;
   const page = $('#page-' + tab);
   if (page) { page.scrollTop = 0; }
@@ -55,9 +100,9 @@ $('#mask').addEventListener('click', closeSheet);
 
 /* ---------------- 流水渲染 ---------------- */
 function flowRow(tx){
-  const ic = CATE_ICON[tx.cat] || ['收','#B8860B'];
+  const ic = CATE_ICON[tx.cat] || ['收','#F0B429'];
   return `<div class="flow-row">
-    <span class="flow-ic ${tx.type==='in'?'fi-in':'fi-out'}">${ic[0]}</span>
+    <span class="flow-ic ${tx.type==='in'?'fi-in':'fi-out'}" style="color:${ic[1]}">${ic[0]}</span>
     <div class="flow-body">
       <div class="flow-title">${tx.title}</div>
       <div class="flow-sub">${tx.sub}</div>
@@ -232,12 +277,12 @@ function commitTx(d){
   renderFlow();
   if (tx.type === 'in'){
     const todayEl = $('#homeTodayAmount');
-    const cur = parseFloat(todayEl.textContent.replace(/,/g,'')) + d.amount;
-    todayEl.textContent = cur.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const cur = (parseFloat(todayEl.dataset.val) || 0) + d.amount;
+    animateNum(todayEl, cur, 2, 600);
     const cnt = $('#homeTodayCount'); cnt.textContent = (parseInt(cnt.textContent)+1);
     const mEl = $('#homeMonthAmount');
-    const mv = parseFloat(mEl.textContent.replace(/,/g,'')) + d.amount;
-    mEl.textContent = mv.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const mv = (parseFloat(mEl.dataset.val) || 0) + d.amount;
+    animateNum(mEl, mv, 2, 600);
     monthCount++;
     $('#ledgerMonth').textContent = `本月 ${monthCount} 笔`;
     toast(`记账成功 +¥${d.amount.toFixed(0)}，已同步首页`);
@@ -247,6 +292,9 @@ function commitTx(d){
 }
 
 $('#micBtn').addEventListener('click', ()=> startVoice());
+bindTapRipple($('#micBtn'));
+const tabFab = $('#tabFab');
+if (tabFab) bindTapRipple(tabFab);
 $$('.vchip').forEach(c => c.addEventListener('click', ()=> startVoice(c.dataset.say)));
 
 /* ---------------- 客户页 ---------------- */
@@ -276,10 +324,10 @@ function renderCustomers(){
         <div class="cust-days ${c.last>=30?'risk':''}">${c.last===0?'今天到店':c.last+' 天未到店'}</div>
       </div>
     </div>`).join('')
-    : '<div class="cart-empty">没有找到匹配的客户</div>';
+    : '<div class="cart-empty"><span class="empty-illus"></span>没有找到匹配的客户</div>';
   list.forEach((c,i)=>{
     const node = document.querySelectorAll('#custList .cust-spark')[i];
-    Charts.sparkline(node, c.trend, c.tags.includes('risk') ? '#C7806B' : '#D4A017');
+    Charts.sparkline(node, c.trend, c.tags.includes('risk') ? '#F08A75' : '#F0B429');
   });
   $$('#custList .cust-card').forEach(card=>{
     card.addEventListener('click', ()=> customerDetail(CUSTOMERS[parseInt(card.dataset.cust)]));
@@ -289,7 +337,7 @@ function customerDetail(c){
   const risk = c.tags.includes('risk');
   openSheet(`
     <div class="cd-head">
-      <span class="cd-ava" style="${risk?'background:linear-gradient(145deg,#F6D8CF,#E3A896);color:#8C3A26':''}">${c.name[0]}</span>
+      <span class="cd-ava" style="${risk?'background:#FDEDEA;color:#F04B3E':''}">${c.name[0]}</span>
       <div>
         <div class="cd-name">${c.name} ${custTags(c)}</div>
         <div class="cd-meta">${c.last===0?'今天到店':'上次到店 '+c.last+' 天前'} · 会员卡号 880${1000+c.visits}</div>
@@ -356,6 +404,7 @@ function renderInventory(){
     const v = INVENTORY[parseInt(b.dataset.idx)];
     cart.set(v.name, (cart.get(v.name)||0) + 1);
     $('#cartCount').textContent = cart.size;
+    $('#cartCount').classList.toggle('zero', cart.size === 0);
     toast(`已加入采购清单：${v.name} ×1`);
   }));
 }
@@ -373,7 +422,7 @@ $('#cartBtn').addEventListener('click', ()=>{
   openSheet(`
     <div class="sheet-title">采购清单</div>
     <div class="sheet-sub">共 ${cart.size} 种耗材，供应商：美业一站采（账期 7 天）</div>
-    ${cart.size === 0 ? '<div class="cart-empty">清单还是空的，去库存页添加吧</div>' :
+    ${cart.size === 0 ? '<div class="cart-empty"><span class="empty-illus"></span>清单还是空的，去库存页添加吧</div>' :
       [...cart.entries()].map(([name,qty])=>`
         <div class="cart-li"><span>${name}</span>
           <span class="qty">×${qty} · 约 ¥${(PRICE[name]||30)*qty}
@@ -386,11 +435,13 @@ $('#cartBtn').addEventListener('click', ()=>{
        </div>`}`);
   $$('#sheet [data-del]').forEach(x=> x.addEventListener('click', ()=>{
     cart.delete(x.dataset.del); $('#cartCount').textContent = cart.size;
+    $('#cartCount').classList.toggle('zero', cart.size === 0);
     $('#cartBtn').click();
   }));
   const ok = $('#orderOk');
   ok && ok.addEventListener('click', ()=>{
     cart.clear(); $('#cartCount').textContent = 0;
+    $('#cartCount').classList.add('zero');
     closeSheet(); toast('采购单已提交，预计明天下午送达');
   });
 });
@@ -404,8 +455,8 @@ function renderRevChart(){
   Charts.lineChart($('#revChart'), {
     labels:d.labels, height:190,
     series:[
-      { name:'今年', color:'#D4A017', data:d.thisYear, area:true },
-      { name:'去年', color:'#B9B09A', data:d.lastYear, area:false },
+      { name:'今年', color:'#F0B429', data:d.thisYear, area:true },
+      { name:'去年', color:'#C4CBD8', data:d.lastYear, area:false },
     ]
   });
 }
