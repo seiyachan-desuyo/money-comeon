@@ -27,7 +27,41 @@
 <div class="stage">
 <div class="phone">
 
-  <!-- ============ 状态栏 ============ -->
+  <!-- ============ 桌面端侧边栏（≥768px 显示，手机端隐藏） ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <span class="sb-mark">来</span>
+      <div>
+        <b>来钱花</b>
+        <small>小微商户经营管家</small>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <a class="tab side-tab on" data-tab="home">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 10.5L12 3l9 7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V21h14V9.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 21v-6h5v6"/></svg>
+        首页总览
+      </a>
+      <a class="tab side-tab" data-tab="ledger">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11v.5a6.5 6.5 0 0013 0V11" stroke-linecap="round"/><path d="M12 18v3.5" stroke-linecap="round"/></svg>
+        智能记账
+      </a>
+      <a class="tab side-tab" data-tab="customers">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20c0-3.6 3.4-5.5 7.5-5.5s7.5 1.9 7.5 5.5" stroke-linecap="round"/></svg>
+        客户经营
+      </a>
+      <a class="tab side-tab" data-tab="inventory">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 8l-9-5-9 5 9 5 9-5z" stroke-linejoin="round"/><path d="M3 8v8l9 5 9-5V8" stroke-linejoin="round"/><path d="M12 13v8" stroke-linecap="round"/></svg>
+        耗材库存
+      </a>
+      <a class="tab side-tab" data-tab="insights">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-4"/><path d="M13 16V8"/><path d="M18 16v-6"/></svg>
+        经营参谋
+      </a>
+    </nav>
+    <div class="sb-foot">毕业设计演示原型<br/>数据均为虚构</div>
+  </aside>
+
+  <!-- ============ 状态栏（仅手机外壳模式） ============ -->
   <div class="statusbar">
     <span class="sb-time">9:41</span>
     <span class="sb-icons">
@@ -65,6 +99,9 @@
           </div>
         </div>
       </header>
+
+      <div class="home-cols">
+       <div class="page-col">
 
       <!-- 资金卡 -->
       <div class="bank-card">
@@ -167,6 +204,9 @@
         </div>
       </div>
 
+       </div><!-- /.page-col 左 -->
+
+       <div class="page-col">
       <!-- 今日流水 -->
       <div class="panel">
         <div class="panel-head">
@@ -175,6 +215,8 @@
         </div>
         <div id="homeFlow"></div>
       </div>
+       </div><!-- /.page-col 右 -->
+      </div><!-- /.home-cols -->
 
       <div class="page-end">— 来钱花 · 让每一笔收入都有数 —</div>
     </section>

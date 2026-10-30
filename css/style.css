@@ -536,12 +536,12 @@ input{font-family:inherit;outline:none;border:none;background:none}
 .sheet{
   position:absolute;left:0;right:0;bottom:0;z-index:51;max-height:82%;
   background:#fff;border-radius:24px 24px 0 0;padding:8px 18px 28px;
-  transform:translateY(105%);transition:transform .34s var(--ease-spring);
-  overflow-y:auto;scrollbar-width:none;
+  transform:translateY(108%);transition:transform .34s var(--ease-spring), visibility .34s;
+  overflow-y:auto;scrollbar-width:none;visibility:hidden;
   box-shadow:0 -16px 40px -12px rgba(31,35,41,.25);
 }
 .sheet::-webkit-scrollbar{display:none}
-.sheet.on{transform:none}
+.sheet.on{transform:none;visibility:visible}
 .sheet-grab{width:40px;height:4px;border-radius:3px;background:#DFE3EA;margin:5px auto 13px}
 .sheet-title{font-size:17px;font-weight:800;margin:2px 0 3px}
 .sheet-sub{font-size:11.5px;color:var(--ink-3);margin-bottom:13px}
@@ -731,6 +731,141 @@ input{font-family:inherit;outline:none;border:none;background:none}
 .cf-net .cn-label{font-size:12.5px;font-weight:800;color:var(--gold-ink);display:flex;align-items:center;gap:5px}
 .cf-net .cn-sub{font-size:10px;color:var(--ink-3);margin-top:3px}
 .cf-net .cn-num{font-size:22px;font-weight:800;color:var(--gold-deep);font-family:"DIN Alternate","Helvetica Neue",sans-serif}
+
+/* ---------------- 桌面端侧边栏（手机端隐藏，≥768px 显示） ---------------- */
+/* 首页双栏包裹：手机端穿透不影响单栏顺序，桌面端变为 flex 双列 */
+.home-cols,.page-col{display:contents}
+.sidebar{display:none}
+.sb-mark{
+  font-family:Songti SC, STSong, serif; font-weight:700;
+  width:40px;height:40px;border-radius:12px;flex:none;
+  background:linear-gradient(150deg,#FFD166,#F0B429);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 8px 16px -6px rgba(240,180,41,.6);
+}
+
+/* ============================================================
+   响应式 · 平板 / 桌面（≥768px）：左侧栏 + 双列网格
+   ============================================================ */
+@media (min-width:768px){
+  /* 去掉手机外壳，页面自然铺满 */
+  .stage{display:block;padding:0;background:#F5F7FA}
+  .phone{
+    width:100%;height:100dvh;border:none;border-radius:0;
+    box-shadow:none;background:#F5F7FA;
+  }
+  .statusbar{display:none}
+  .screen{inset:0;left:220px;background:#F5F7FA}
+  .splash{border-radius:0}
+
+  /* 侧边栏 */
+  .sidebar{
+    display:flex;flex-direction:column;
+    position:absolute;left:0;top:0;bottom:0;width:220px;z-index:35;
+    background:#fff;border-right:1px solid var(--line);
+    padding:22px 14px 16px;
+  }
+  .sb-brand{display:flex;align-items:center;gap:11px;padding:4px 10px 24px}
+  .sb-brand b{display:block;font-size:16px;font-weight:800;letter-spacing:.5px}
+  .sb-brand small{display:block;font-size:10.5px;color:var(--ink-3);margin-top:2px}
+  .sb-nav{display:flex;flex-direction:column;gap:3px;flex:1}
+  .side-tab{
+    flex-direction:row;justify-content:flex-start;align-items:center;
+    gap:11px;font-size:13.5px;font-weight:600;color:var(--ink-2);
+    padding:11px 12px;border-radius:12px;position:relative;
+    transition:background .2s,color .2s;
+  }
+  .side-tab svg{width:21px;height:21px;flex:none}
+  .side-tab.on{background:var(--gold-soft);color:var(--gold-deep)}
+  .side-tab.on::before{
+    content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;
+    border-radius:2px;background:var(--gold);
+  }
+  .sb-foot{font-size:10px;line-height:1.7;color:var(--ink-4);padding:8px 12px 0}
+
+  /* 底部 Tab 切换为侧栏 */
+  .tabbar{display:none}
+
+  /* 页面：768–1023 侧栏 + 单列居中（窄平板竖屏更舒展） */
+  .page{
+    display:block;padding:24px 28px 56px;
+    max-width:860px;margin:0 auto;
+  }
+  .page > *{margin-top:0!important}
+  .page > * + *{margin-top:14px!important}
+  .page > header{margin-top:0!important}
+  .home-cols,.page-col{display:block}
+  .home-cols > * + *{margin-top:14px}
+
+  /* Header 不再向两侧出血，改为圆角大卡；
+     注意：grid 项上 overflow:hidden 会使内容高度被算成 0，桌面端必须 visible，
+     装饰圆环同步收进卡内避免溢出圆角 */
+  .home-hero,.sub-header,.sub-header.flat{
+    margin:0;padding:22px 26px 26px;border-radius:var(--r-lg);overflow:visible;
+  }
+  .home-hero::before,.sub-header::before{right:18px;top:50%;transform:translateY(-50%);width:70px;height:70px;border-width:10px}
+  /* 取消手机端的上浮重叠，统一间距接管 */
+  .bank-card,.voice-stage,.cust-summary,.gauge-row{margin:0!important}
+  .inv-overview{margin:0!important}
+
+  /* 列表与筛选：单列 */
+  #custList,#invList{display:block}
+  #custList .cust-card,#invList .inv-card{margin-bottom:12px}
+  #custList .cust-card:last-child,#invList .inv-card:last-child{margin-bottom:0}
+  #custSeg,#invSeg,#insightSeg{width:auto}
+  #custSeg .seg,#invSeg .seg,#insightSeg .seg{flex:none;padding-left:20px;padding-right:20px}
+
+  /* 弹层在大屏上收窄居中（相对侧边栏右侧内容区居中，仍从底部升起） */
+  .sheet{
+    left:calc(50% + 110px);right:auto;bottom:28px;width:min(520px,calc(100vw - 268px));
+    transform:translate(-50%,108%);border-radius:22px;max-height:84%;
+  }
+  .sheet.on{transform:translate(-50%,0)}
+  .toast{bottom:44px}
+}
+
+/* ≥1024：宽屏桌面，内容双列网格（最大 1200 居中） */
+@media (min-width:1024px){
+  .page{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;
+    padding:26px 32px 56px;max-width:1200px;
+  }
+  .page > *{margin-top:0!important}
+  .page > * + *{margin-top:0!important}
+  .page > header,.page-end{grid-column:1/-1}
+  .page > header{margin-bottom:0}
+
+  /* 首页：左右双栏（左：资金卡+快捷入口+待办，右：流水） */
+  #page-home{display:block;max-width:1200px}
+  #page-home > .home-hero{margin:0 0 14px}
+  #page-home .home-cols{display:flex;gap:14px;align-items:flex-start}
+  #page-home .page-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+  #page-home .home-cols > * + *{margin-top:0}
+  #page-home .bank-card,#page-home .layer-strip,#page-home .panel{margin:0}
+  #page-home .page-end{padding-top:18px}
+
+  /* 客户/库存卡片双列 */
+  #custList,#invList{
+    grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  }
+  #custList .cust-card,#invList .inv-card{margin-bottom:0}
+  .cust-summary{align-self:center}
+  .searchbar{align-self:center}
+  #custSeg,#invSeg{grid-column:1/-1;justify-self:start}
+  .inv-overview{grid-column:1/-1}
+
+  /* 参谋页：周期切换与健康分仪表并排，KPI 一行 4 个 */
+  .kpi-grid{grid-column:1/-1;grid-template-columns:repeat(4,1fr);gap:12px}
+  #insightSeg{align-self:center;justify-self:start}
+
+  /* 弹层宽度上限放宽，居中位置不变（内容区中线 = 视口中线 +110px） */
+  .sheet{width:min(560px,calc(100vw - 268px))}
+}
+
+/* 更宽桌面：内容留白更舒展 */
+@media (min-width:1280px){
+  .page{padding:32px 40px 64px}
+}
 
 /* 真实手机访问：铺满全屏 */
 @media (max-width:430px){
