@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>登录 · 来钱花</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="auth-stage">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-logo">
+        <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+          <defs><linearGradient id="auG" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FFD166"/><stop offset="1" stop-color="#F0B429"/>
+          </linearGradient></defs>
+          <rect x="2" y="2" width="44" height="44" rx="14" fill="url(#auG)"/>
+          <text x="24" y="33" text-anchor="middle" font-size="26" fill="#fff" font-family="Songti SC, STSong, serif" font-weight="700">来</text>
+        </svg>
+      </span>
+      <div class="auth-name">来钱花</div>
+      <div class="auth-slogan">小微商户的经营管家</div>
+    </div>
+
+    <div class="auth-seg" id="authSeg">
+      <span class="seg on" data-mode="login">登录</span>
+      <span class="seg" data-mode="register">注册</span>
+      <i class="auth-seg-bar" id="authSegBar"></i>
+    </div>
+
+    <!-- 登录 / 注册表单 -->
+    <form class="auth-form" id="authForm" autocomplete="on">
+      <label class="auth-field">
+        <span>邮箱</span>
+        <input type="email" id="auEmail" placeholder="you@example.com" autocomplete="email" required />
+      </label>
+      <label class="auth-field">
+        <span>密码</span>
+        <input type="password" id="auPassword" placeholder="至少 6 位" autocomplete="current-password" minlength="6" required />
+      </label>
+      <label class="auth-field auth-only-register">
+        <span>店铺名称<span class="auth-optional">（选填）</span></span>
+        <input type="text" id="auShop" placeholder="如：星心理发店 · 望京店" maxlength="20" />
+      </label>
+
+      <div class="auth-msg" id="authMsg"></div>
+
+      <button type="submit" class="auth-btn" id="auSubmit">登录</button>
+      <div class="auth-tip" id="authTip">
+        登录即表示数据将保存在你自己的账号下，仅本人可见
+      </div>
+    </form>
+
+    <!-- 注册后待确认邮箱 -->
+    <div class="auth-done" id="authDone" hidden>
+      <div class="ad-ico">✉️</div>
+      <div class="ad-title">注册成功，差最后一步</div>
+      <div class="ad-desc">确认邮件已发送至 <b id="adEmail"></b>，请前往邮箱点击确认链接，确认后回来登录即可。</div>
+      <button class="auth-btn" id="adBack">返回登录</button>
+      <button class="auth-link-btn" id="adResend">重新发送确认邮件</button>
+    </div>
+  </div>
+  <div class="auth-foot">毕业设计演示 · 数据存储于 Supabase，开启行级安全隔离</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

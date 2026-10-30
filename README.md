@@ -1,7 +1,21 @@
 # 来钱花 · 小微商户经营管理 App 交互原型
 
-面向个体工商户（演示场景：理发店）的经营管理 App 高保真交互原型。
-纯 HTML/CSS/JS 实现，**零依赖、离线可用**，双击 `index.html` 即可演示。
+面向个体工商户（演示场景：理发店）的经营管理 App 高保真原型。
+纯 HTML/CSS/JS 实现，通过 CDN 引入 `@supabase/supabase-js`，**无需自建后端**：未登录跳转登录页，登录后账目、客户、库存读写 Supabase 云端数据。
+
+## 快速开始
+
+1. 在 [Supabase](https://supabase.com) 创建项目，将 `supabase/schema.sql` 整段粘贴到 **SQL Editor** 执行一次（建 4 张表 + RLS 行级安全策略 + 注册自动建档触发器，幂等可重复执行）。
+2. 把项目地址与 publishable key 填入 `js/supabase.js`（当前已配置）。
+3. 用任意静态服务器打开本目录即可（Supabase 回调依赖 http(s) 地址，建议不要直接双击 file:// 打开）：
+   ```bash
+   python3 -m http.server 8080
+   # 浏览器访问 http://localhost:8080
+   ```
+4. 在登录页点「注册」，用邮箱注册 → **去邮箱点确认链接** → 回来登录。
+5. 空账号可在客户页 / 库存页点「载入演示数据」快速获得答辩演示数据。
+
+> 所有表均开启 RLS，策略为 `user_id = auth.uid()`，用户只能读写自己的数据；publishable key 只有 anon 权限，可安全放在前端。
 
 **响应式适配**：手机（<768px）为单栏 + 底部 Tab；平板/桌面（≥768px）自动切换为左侧固定侧边栏 + 居中内容区（宽屏 ≥1024px 卡片双列网格，最大宽度 1200px），底部弹层在大屏收窄居中。
 
@@ -31,11 +45,16 @@
 ## 文件结构
 
 ```
+auth.html       登录 / 注册页（邮箱密码，白金风格）
 index.html      响应式布局（手机单栏/桌面侧栏双列）+ 五个页面结构 + 底部 Tab/侧边栏
 css/style.css   白金清新设计系统（白底 + 浅金弥散 Header、CSS 变量、面性图标、卡片、弹层、微交互动效）
-js/data.js      理发店演示数据（流水/客户/库存/同比）
+js/supabase.js  Supabase 客户端初始化（URL + publishable key）
+js/store.js     数据访问层：四张表读写、行→视图模型映射、演示数据导入
+js/auth.js      注册 / 登录 / 邮箱确认提示 / 会话跳转
+js/data.js      理发店演示数据（流水/客户/库存/同比，作为离线 fallback）
 js/charts.js    纯 SVG 图表：双折线、迷你趋势线、柱状图、环形仪表
-js/app.js       Tab 切换、语音/截图/手动记账流程、筛选搜索、采购车
+js/app.js       登录门禁、真实数据渲染、记账写库、语音/截图/手动记账流程、筛选搜索、采购车
+supabase/schema.sql  数据库初始化脚本（建表 + RLS + 触发器）
 ```
 
 > 所有经营数据均为虚构演示数据；录音/截图识别为前端模拟流程，便于毕业设计答辩演示。

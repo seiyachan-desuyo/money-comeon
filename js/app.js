@@ -1,10 +1,24 @@
 /* ============================================================
-   来钱花 · 交互逻辑
+   来钱花 · 交互逻辑（Supabase 全栈版）
+   - 未登录跳转 auth.html；登录后从 Supabase 读取真实数据
+   - 记账确认后真实写入 transactions；网络失败时降级为本地演示
    ============================================================ */
 (function(){
 'use strict';
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------------- 运行时状态 ---------------- */
+let currentUser = null;
+let profile = null;
+let shopName = '我的小店';
+let txRows = [];
+let realTx = false, realCust = false, realInv = false;
+let stats = null;
+let kpiMonth = 38642;
+let monthCount = 0;
 
 /* ---------------- 数字滚动累加（进场/更新） ---------------- */
 function animateNum(el, to, decimals, duration){
@@ -23,18 +37,6 @@ function animateNum(el, to, decimals, duration){
     if (p < 1) requestAnimationFrame(tick);
   })(t0);
 }
-/* 首页金额：启动屏期间归零，进场时滚动到真实值 */
-(function initAmounts(){
-  const todayEl = $('#homeTodayAmount'), monthEl = $('#homeMonthAmount');
-  const initToday = parseFloat(todayEl.textContent.replace(/,/g,''));
-  const initMonth = parseFloat(monthEl.textContent.replace(/,/g,''));
-  todayEl.dataset.val = 0; monthEl.dataset.val = 0;
-  todayEl.textContent = monthEl.textContent = (0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
-  setTimeout(()=>{
-    animateNum(todayEl, initToday, 2, 900);
-    animateNum(monthEl, initMonth, 2, 1000);
-  }, 620);
-})();
 /* 按下扩散光环（语音钮 / 中间凸起 Tab） */
 function bindTapRipple(el){
   el.addEventListener('pointerdown', ()=>{
@@ -44,9 +46,7 @@ function bindTapRipple(el){
   });
 }
 
-/* ---------------- 启动屏 & Tab ---------------- */
-setTimeout(()=> $('#splash').classList.add('off'), 1150);
-
+/* ---------------- Tab ---------------- */
 const TABS = ['home','ledger','customers','inventory','insights'];
 let insightInited = false;
 function go(tab){
@@ -58,7 +58,7 @@ function go(tab){
     renderRevChart();
     if (!insightInited){
       insightInited = true;
-      animateNum($('#kpiRev'), 38642, 0, 850);
+      animateNum($('#kpiRev'), Math.round(kpiMonth), 0, 850);
     }
   }
   $('#screen').scrollTop = 0;
@@ -78,7 +78,7 @@ function toast(msg){
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=> t.classList.remove('on'), 2200);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
 }
 function openSheet(html){
   $('#sheet').innerHTML = '<div class="sheet-grab"></div>' + html;
@@ -104,18 +104,21 @@ function flowRow(tx){
   return `<div class="flow-row">
     <span class="flow-ic ${tx.type==='in'?'fi-in':'fi-out'}" style="color:${ic[1]}">${ic[0]}</span>
     <div class="flow-body">
-      <div class="flow-title">${tx.title}</div>
-      <div class="flow-sub">${tx.sub}</div>
+      <div class="flow-title">${esc(tx.title)}</div>
+      <div class="flow-sub">${esc(tx.sub)}</div>
     </div>
     <span class="flow-amt ${tx.type==='in'?'in':'out'}">${tx.amount>0?'+':''}${tx.amount.toFixed(0)}</span>
   </div>`;
 }
+const EMPTY_FLOW = '<div class="list-empty">今天还没有流水，点下方麦克风记第一笔吧</div>';
 function renderFlow(){
-  $('#ledgerList').innerHTML = TX_GROUPS.map(g =>
-    `<div class="flow-day">${g.day}</div>${g.items.map(flowRow).join('')}`
-  ).join('');
+  $('#ledgerList').innerHTML = TX_GROUPS.length
+    ? TX_GROUPS.map(g => `<div class="flow-day">${g.day}</div>${g.items.map(flowRow).join('')}`).join('')
+    : EMPTY_FLOW;
   // 首页只展示今天前 4 条
-  $('#homeFlow').innerHTML = TX_GROUPS[0].items.slice(0,4).map(flowRow).join('');
+  $('#homeFlow').innerHTML = TX_GROUPS.length && TX_GROUPS[0].items.length
+    ? TX_GROUPS[0].items.slice(0,4).map(flowRow).join('')
+    : EMPTY_FLOW;
 }
 renderFlow();
 
@@ -127,7 +130,7 @@ const VOICE_SAMPLES = {
     { title:'烫染套餐', cat:'perm', amount:268, pay:'会员卡', customer:'王秀兰', qty:1 },
 };
 const SHOT_SAMPLE =
-  { title:'烫染套餐（美团团购核销）', cat:'perm', amount:268, pay:'美团', customer:'陈美玲', qty:1 };
+  { title:'烫染套餐（美团团购核销）', cat:'perm', amount:268, pay:'美团', customer:'[ph_EMPLOYEE_NAME_3_ph]', qty:1 };
 
 function nowHM(){
   const d = new Date();
@@ -140,7 +143,7 @@ function startVoice(said){
     <div class="ov-rec"><i class="ov-dot"></i>正在聆听</div>
     <div class="ov-time" id="ovTime">0:00</div>
     <div class="ov-wave">${Array.from({length:18},(_,i)=>`<i style="animation-delay:${(i%9)*0.09}s"></i>`).join('')}</div>
-    <div class="ov-bubble" id="ovBubble">${said}</div>
+    <div class="ov-bubble" id="ovBubble">${esc(said)}</div>
     <button class="ov-stop" id="ovStop"><i></i></button>
     <div class="ov-hint" id="ovHint">点击停止并识别</div>
   `);
@@ -166,7 +169,7 @@ function parsingState(text){
   $('#overlay').innerHTML = `
     <div class="ov-loading">
       <div class="spinner"></div>
-      <span>${text}…</span>
+      <span>${esc(text)}…</span>
     </div>`;
 }
 
@@ -242,14 +245,14 @@ function showConfirm(d, from){
       </div>
     </div>
     <div class="confirm-card">
-      <div class="cf-row"><label>项目</label><input id="cfTitle" value="${d.title}" /></div>
+      <div class="cf-row"><label>项目</label><input id="cfTitle" value="${esc(d.title)}" /></div>
       <div class="cf-row cf-amount"><label>金额（元）</label><input id="cfAmount" type="number" value="${d.amount}" inputmode="decimal"/></div>
       <div class="cf-row"><label>支付方式</label>
         <div class="pay-tags" id="cfPay">
           ${['微信','支付宝','现金','会员卡','美团'].map(p=>
             `<span class="pay-tag ${p===d.pay?'on':''}" data-v="${p}">${p}</span>`).join('')}
         </div></div>
-      <div class="cf-row"><label>客户</label><input id="cfCust" value="${d.customer}" /></div>
+      <div class="cf-row"><label>客户</label><input id="cfCust" value="${esc(d.customer)}" /></div>
       <div class="cf-row"><label>时间</label><input value="今天 ${nowHM()}" /></div>
     </div>
     <div class="sheet-actions">
@@ -268,9 +271,14 @@ function showConfirm(d, from){
   });
 }
 
-/* ---------------- 确认入账：更新流水与首页金额 ---------------- */
-let monthCount = 168;
-function commitTx(d){
+/* ---------------- 确认入账 ---------------- */
+const GENERIC_CUST = ['', '散客', '散客（新客）', '手动录入'];
+function buildNote(title, customer){
+  const c = (customer || '').trim();
+  return GENERIC_CUST.includes(c) ? title : title + '｜' + c;
+}
+/* 本地演示模式入账（离线 / 接口失败时） */
+function commitLocal(d){
   const tx = { title:d.title, sub:`${nowHM()} · ${d.pay} · ${d.customer}`,
     cat:d.cat, amount:d.amount, type:d.amount>=0?'in':'out' };
   TX_GROUPS[0].items.unshift(tx);
@@ -285,9 +293,33 @@ function commitTx(d){
     animateNum(mEl, mv, 2, 600);
     monthCount++;
     $('#ledgerMonth').textContent = `本月 ${monthCount} 笔`;
-    toast(`记账成功 +¥${d.amount.toFixed(0)}，已同步首页`);
+    toast(`记账成功 +¥${d.amount.toFixed(0)}（本地演示）`);
   } else {
-    toast(`已记支出 ¥${Math.abs(d.amount).toFixed(0)}`);
+    toast(`已记支出 ¥${Math.abs(d.amount).toFixed(0)}（本地演示）`);
+  }
+}
+/* 真实模式：写入 Supabase transactions，随后重新拉取并刷新首页 */
+async function commitTx(d){
+  if (!realTx) return commitLocal(d);
+  const isIn = d.amount >= 0;
+  toast('正在入账…');
+  try {
+    await Store.addTransaction({
+      amount: Math.abs(d.amount),
+      type: isIn ? '收入' : '支出',
+      category: d.cat || (isIn ? 'haircut' : 'expense'),
+      note: buildNote(d.title, d.customer),
+      payment_method: d.pay || null
+    });
+    txRows = await Store.listTransactions();
+    replaceGroups(Store.groupTransactions(txRows));
+    applyStats(Store.computeStats(txRows));
+    renderFlow();
+    if (realCust) refreshCustomers();
+    toast(isIn ? `记账成功 +¥${Math.abs(d.amount).toFixed(0)}，已同步云端`
+               : `已记支出 ¥${Math.abs(d.amount).toFixed(0)}，已同步云端`);
+  } catch (e) {
+    toast('入账失败：' + Store.errMsg(e));
   }
 }
 
@@ -295,36 +327,42 @@ $('#micBtn').addEventListener('click', ()=> startVoice());
 bindTapRipple($('#micBtn'));
 const tabFab = $('#tabFab');
 if (tabFab) bindTapRipple(tabFab);
-$$('.vchip').forEach(c => c.addEventListener('click', ()=> startVoice(c.dataset.say)));
+$$('.vchip').forEach(c => c.addEventListener('click', () => startVoice(c.dataset.say)));
 
 /* ---------------- 客户页 ---------------- */
 let custSeg = 'all';
 function custTags(c){
   return c.tagTxt.map((t,i)=>
-    `<span class="tag ${c.tags[i]==='risk'?'tag-risk':(c.tags[i]==='new'?'tag-new':'tag-vip')}">${t}</span>`).join('');
+    `<span class="tag ${c.tags[i]==='risk'?'tag-risk':(c.tags[i]==='new'?'tag-new':'tag-vip')}">${esc(t)}</span>`).join('');
+}
+function lastText(c){
+  if (c.last === null || c.last === undefined) return '新客户';
+  return c.last === 0 ? '今天到店' : c.last + ' 天未到店';
 }
 function renderCustomers(){
   const kw = ($('#custSearch').value || '').trim();
   const list = CUSTOMERS.filter(c=>{
-    if (kw && !c.name.includes(kw)) return false;
+    if (kw && !c.name.includes(kw) && !(c.phone||'').includes(kw)) return false;
     if (custSeg === 'vip') return c.tags.includes('vip');
     if (custSeg === 'risk') return c.tags.includes('risk');
     if (custSeg === 'new') return c.tags.includes('new');
     return true;
   });
-  $('#custList').innerHTML = list.length ? list.map((c,idx)=>`
+  $('#custList').innerHTML = list.length ? list.map(c=>`
     <div class="cust-card ${c.tags.includes('risk')?'risk':''}" data-cust="${CUSTOMERS.indexOf(c)}">
-      <span class="cust-ava">${c.name[0]}</span>
+      <span class="cust-ava">${esc(c.name[0]||'客')}</span>
       <div class="cust-main">
-        <div class="cust-name">${c.name} ${custTags(c)}</div>
+        <div class="cust-name">${esc(c.name)} ${custTags(c)}</div>
         <div class="cust-meta">到店 ${c.visits} 次 · 累计 ¥${c.total.toLocaleString()}</div>
       </div>
-      <span class="cust-spark" id="spark${idx}"></span>
+      <span class="cust-spark"></span>
       <div class="cust-right">
-        <div class="cust-days ${c.last>=30?'risk':''}">${c.last===0?'今天到店':c.last+' 天未到店'}</div>
+        <div class="cust-days ${(c.last||0)>=30?'risk':''}">${lastText(c)}</div>
       </div>
     </div>`).join('')
-    : '<div class="cart-empty"><span class="empty-illus"></span>没有找到匹配的客户</div>';
+    : (realCust
+        ? '<div class="cart-empty"><span class="empty-illus"></span>还没有客户资料<button class="seed-btn" data-seed="customers">载入演示客户</button></div>'
+        : '<div class="cart-empty"><span class="empty-illus"></span>没有找到匹配的客户</div>');
   list.forEach((c,i)=>{
     const node = document.querySelectorAll('#custList .cust-spark')[i];
     Charts.sparkline(node, c.trend, c.tags.includes('risk') ? '#F08A75' : '#F0B429');
@@ -333,29 +371,48 @@ function renderCustomers(){
     card.addEventListener('click', ()=> customerDetail(CUSTOMERS[parseInt(card.dataset.cust)]));
   });
 }
+function applyCustomerSummary(){
+  const total = CUSTOMERS.length;
+  const vip = CUSTOMERS.filter(c=>c.tags.includes('vip')).length;
+  const risk = CUSTOMERS.filter(c=>c.tags.includes('risk')).length;
+  const spent = CUSTOMERS.reduce((s,c)=>s+(+c.total||0),0);
+  $('#csCountAll').textContent = total;
+  $('#csCountVip').textContent = vip;
+  $('#csCountRisk').textContent = risk;
+  $('#csSumSpent').textContent = spent >= 10000 ? (spent/10000).toFixed(1)+'万' : Math.round(spent).toLocaleString();
+}
+async function refreshCustomers(){
+  try {
+    const rows = await Store.listCustomers();
+    const views = rows.map(r => Store.toCustomerView(r, txRows));
+    CUSTOMERS.splice(0, CUSTOMERS.length, ...views);
+    applyCustomerSummary();
+    renderCustomers();
+  } catch(e) { /* 静默：保留当前列表 */ }
+}
 function customerDetail(c){
   const risk = c.tags.includes('risk');
   openSheet(`
     <div class="cd-head">
-      <span class="cd-ava" style="${risk?'background:#FDEDEA;color:#F04B3E':''}">${c.name[0]}</span>
+      <span class="cd-ava" style="${risk?'background:#FDEDEA;color:#F04B3E':''}">${esc(c.name[0]||'客')}</span>
       <div>
-        <div class="cd-name">${c.name} ${custTags(c)}</div>
-        <div class="cd-meta">${c.last===0?'今天到店':'上次到店 '+c.last+' 天前'} · 会员卡号 880${1000+c.visits}</div>
+        <div class="cd-name">${esc(c.name)} ${custTags(c)}</div>
+        <div class="cd-meta">${lastText(c)}${c.phone?' · '+esc(c.phone):''} · 会员卡号 880${1000+c.visits}</div>
       </div>
     </div>
     <div class="cd-stats">
       <div><b>${c.visits}</b><span>到店次数</span></div>
       <div><b>¥${c.total.toLocaleString()}</b><span>累计消费</span></div>
-      <div><b>¥${Math.round(c.total/c.visits)}</b><span>平均客单</span></div>
+      <div><b>¥${c.visits?Math.round(c.total/c.visits):0}</b><span>平均客单</span></div>
     </div>
     <div class="cd-chart">
       <div class="ct">近 6 个月消费（元）</div>
       <div id="cdChart"></div>
     </div>
-    <div class="pref-tags">${c.prefs.map(p=>`<span>${p}</span>`).join('')}</div>
+    ${c.prefs && c.prefs.length ? `<div class="pref-tags">${c.prefs.map(p=>`<span>${esc(p)}</span>`).join('')}</div>` : ''}
     ${c.advice ? `<div class="ai-advice">
       <div class="aa-h">💡 AI 唤回建议（保守策略）</div>
-      <p>${c.advice}</p>
+      <p>${esc(c.advice)}</p>
     </div>` : `<div class="ai-advice">
       <div class="aa-h">💡 客户状态</div>
       <p>消费稳定，到店节奏正常，维持现有服务即可，暂不建议额外打扰。</p>
@@ -376,30 +433,40 @@ $('#custSeg').addEventListener('click', e=>{
   renderCustomers();
 });
 $('#custSearch').addEventListener('input', renderCustomers);
+applyCustomerSummary();
 renderCustomers();
 
 /* ---------------- 库存页 ---------------- */
 let invCat = 'all';
 const cart = new Map();
+const DEMO_PRICE = { '染发膏（自然黑）':32,'电推剪刀头':45,'烫发药水':68,'一次性毛巾':28,'剃须膏':39,
+  '卡诗护发素':128,'护发精油':88,'染发膏（栗棕）':32,'专业洗发水':58,'围布 / 披肩':15 };
+function unitPrice(v){ return (v.cost && v.cost > 0) ? v.cost : (DEMO_PRICE[v.name] || 30); }
 function renderInventory(){
   const list = INVENTORY.filter(v => invCat==='all' || v.cat===invCat || (invCat==='wash' && v.cat==='care'));
-  $('#invList').innerHTML = list.map((v,i)=>{
+  $('#invList').innerHTML = list.length ? list.map(v=>{
     const realIdx = INVENTORY.indexOf(v);
     const badge = v.level==='danger' ? '<span class="inv-badge ib-danger">库存紧张</span>'
       : v.level==='warn' ? '<span class="inv-badge ib-warn">偏低</span>'
       : '<span class="inv-badge ib-ok">正常</span>';
+    const foot = (v.days != null)
+      ? `<span>剩余 ${v.pct}% · 预计可用 <b style="color:${v.level==='danger'?'var(--danger)':'inherit'}">${v.days} 天</b></span>`
+      : `<span>余量 <b>${v.qty}${esc(v.unit||'')}</b> · 安全库存 ${v.min}${esc(v.unit||'')}</span>`;
     return `<div class="inv-card ${v.level==='danger'?'low':''}">
       <div class="inv-top">
-        <div class="inv-name">${v.name} <span class="inv-spec">${v.spec}</span></div>
+        <div class="inv-name">${esc(v.name)} <span class="inv-spec">${esc(v.spec)}</span></div>
         ${badge}
       </div>
       <div class="inv-bar"><i style="width:${v.pct}%"></i></div>
       <div class="inv-foot">
-        <span>剩余 ${v.pct}% · 预计可用 <b style="color:${v.level==='danger'?'var(--danger)':'inherit'}">${v.days} 天</b></span>
+        ${foot}
         <button class="reorder-btn" data-idx="${realIdx}">${v.level==='danger'?'立即补货':'加入采购'}</button>
       </div>
     </div>`;
-  }).join('');
+  }).join('')
+  : (realInv
+      ? '<div class="cart-empty"><span class="empty-illus"></span>还没有耗材资料<button class="seed-btn" data-seed="inventory">载入演示库存</button></div>'
+      : '<div class="cart-empty"><span class="empty-illus"></span>暂无耗材</div>');
   $$('.reorder-btn').forEach(b=> b.addEventListener('click', ()=>{
     const v = INVENTORY[parseInt(b.dataset.idx)];
     cart.set(v.name, (cart.get(v.name)||0) + 1);
@@ -408,6 +475,22 @@ function renderInventory(){
     toast(`已加入采购清单：${v.name} ×1`);
   }));
 }
+function applyInventoryMeta(monthExpense){
+  const total = INVENTORY.length;
+  const low = INVENTORY.filter(v=>v.level==='danger').length;
+  $('#invSummary').textContent = total ? `${total} 种耗材 · ${low ? low+' 种低于安全库存' : '库存充足'}` : '暂无耗材';
+  $('#invLowNum').textContent = low;
+  $('#invOkNum').textContent = total - low;
+  $('#invMonthExp').textContent = '¥' + Math.round(monthExpense).toLocaleString();
+}
+async function refreshInventory(){
+  try {
+    const rows = await Store.listInventory();
+    INVENTORY.splice(0, INVENTORY.length, ...rows.map(Store.toInventoryView));
+    applyInventoryMeta(stats ? stats.monthExpense : 0);
+    renderInventory();
+  } catch(e) { /* 静默 */ }
+}
 $('#invSeg').addEventListener('click', e=>{
   const seg = e.target.closest('.seg'); if (!seg) return;
   $$('#invSeg .seg').forEach(s=>s.classList.toggle('on', s===seg));
@@ -415,18 +498,16 @@ $('#invSeg').addEventListener('click', e=>{
   renderInventory();
 });
 $('#cartBtn').addEventListener('click', ()=>{
-  const PRICE = { '染发膏（自然黑）':32,'电推剪刀头':45,'烫发药水':68,'一次性毛巾':28,'剃须膏':39,
-    '卡诗护发素':128,'护发精油':88,'染发膏（栗棕）':32,'专业洗发水':58,'围布 / 披肩':15 };
   let total = 0;
-  cart.forEach((qty,name)=> total += (PRICE[name]||30)*qty);
+  cart.forEach((qty,name)=> total += unitPrice({name})*qty);
   openSheet(`
     <div class="sheet-title">采购清单</div>
     <div class="sheet-sub">共 ${cart.size} 种耗材，供应商：美业一站采（账期 7 天）</div>
     ${cart.size === 0 ? '<div class="cart-empty"><span class="empty-illus"></span>清单还是空的，去库存页添加吧</div>' :
       [...cart.entries()].map(([name,qty])=>`
-        <div class="cart-li"><span>${name}</span>
-          <span class="qty">×${qty} · 约 ¥${(PRICE[name]||30)*qty}
-          <em data-del="${name}" style="margin-left:8px;color:var(--danger);font-style:normal">移除</em></span>
+        <div class="cart-li"><span>${esc(name)}</span>
+          <span class="qty">×${qty} · 约 ¥${unitPrice({name})*qty}
+          <em data-del="${esc(name)}" style="margin-left:8px;color:var(--danger);font-style:normal">移除</em></span>
         </div>`).join('') +
       `<div class="cart-total"><span>预估合计</span><span>¥${total}</span></div>
        <div class="sheet-actions">
@@ -447,6 +528,21 @@ $('#cartBtn').addEventListener('click', ()=>{
 });
 renderInventory();
 
+/* 演示数据种子（空客户/空库存页一键导入） */
+document.addEventListener('click', async e=>{
+  const btn = e.target.closest('[data-seed]');
+  if (!btn) return;
+  btn.disabled = true;
+  const kind = btn.dataset.seed;
+  try {
+    if (kind === 'customers'){ await Store.seedCustomers(); await refreshCustomers(); toast('演示客户已导入'); }
+    if (kind === 'inventory'){ await Store.seedInventory(); await refreshInventory(); toast('演示库存已导入'); }
+  } catch (err) {
+    toast('导入失败：' + Store.errMsg(err));
+    btn.disabled = false;
+  }
+});
+
 /* ---------------- 经营分析页 ---------------- */
 Charts.gauge($('#gaugeBox'), 82);
 let revPeriod = 'month';
@@ -466,22 +562,17 @@ $('#insightSeg').addEventListener('click', e=>{
   revPeriod = seg.dataset.period;
   renderRevChart();
 });
-// 图表初始在隐藏页，宽度为 0；首次切到分析页时重绘（go() 中已处理）
-// 兜底：若页面初始即为激活态（如直达打开），立即渲染一次
 if ($('#page-insights').classList.contains('on')) renderRevChart();
 window.addEventListener('resize', ()=>{ if ($('#page-insights').classList.contains('on')) renderRevChart(); });
 
 /* ---------------- 财务健康：三大报表轻量版 ---------------- */
 const fmtY = v => v.toLocaleString('zh-CN',{minimumFractionDigits:(Number(v)===v && v%1?2:0),maximumFractionDigits:2});
 const sumAmt = arr => arr.reduce((s,x)=>s+x.amount,0);
-/* 条形进场动画（下一帧给宽度） */
 function animateFinBars(sel){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     $$(sel).forEach(b=>{ b.style.width = b.dataset.w + '%'; });
   }));
 }
-
-/* ① 利润表：本月赚了多少（月/季/年切换） */
 function renderPL(period){
   const d = PL_DATA[period];
   const incTotal = sumAmt(d.income), costTotal = sumAmt(d.cost);
@@ -525,8 +616,6 @@ function renderPL(period){
     renderPL(seg.dataset.p);
   });
 }
-
-/* ② 资产负债表：家底清单（月底快照） */
 function renderBS(){
   const a = sumAmt(BS_DATA.assets), l = sumAmt(BS_DATA.liabilities);
   const net = a - l;
@@ -553,8 +642,6 @@ function renderBS(){
       </div>
     </div>`;
 }
-
-/* ③ 现金流量表：钱从哪来花哪去（收支对比条） */
 function renderCF(){
   const tin = sumAmt(CF_DATA.inflow), tout = sumAmt(CF_DATA.outflow);
   const net = tin - tout, max = Math.max(tin, tout);
@@ -590,8 +677,6 @@ function renderCF(){
     </div>`;
   animateFinBars('#finContent .cf-track i');
 }
-
-/* 三表 Tab 切换 */
 function renderFinance(tab){
   if (tab === 'pl') renderPL('month');
   else if (tab === 'bs') renderBS();
@@ -603,5 +688,180 @@ $('#finSeg').addEventListener('click', e=>{
   renderFinance(seg.dataset.fin);
 });
 renderFinance('pl');
+
+/* ============================================================
+   真实数据：统计 → DOM
+   ============================================================ */
+function replaceGroups(groups){
+  TX_GROUPS.splice(0, TX_GROUPS.length, ...groups);
+}
+function applyStats(s){
+  stats = s;
+  monthCount = s.monthCount;
+  animateNum($('#homeTodayAmount'), s.todayIncome, 2, 700);
+  animateNum($('#homeMonthAmount'), s.monthIncome, 2, 800);
+  animateNum($('#homeMonthExpense'), s.monthExpense, 2, 800);
+  $('#homeTodayCount').textContent = s.todayCount;
+  $('#ledgerMonth').textContent = `本月 ${s.monthCount} 笔`;
+  /* 较昨日对比 */
+  const cmp = $('#homeTodayCmp');
+  if (s.yesterdayIncome > 0){
+    const pct = Math.round((s.todayIncome - s.yesterdayIncome) / s.yesterdayIncome * 1000) / 10;
+    cmp.innerHTML = `较昨日 <em class="${pct>=0?'up':'down'}">${pct>=0?'+':''}${pct}%</em>`;
+  } else {
+    cmp.textContent = '昨日暂无对比';
+  }
+  /* 库存页月度耗材支出 */
+  $('#invMonthExp').textContent = '¥' + Math.round(s.monthExpense).toLocaleString();
+  /* 参谋页营业收入 KPI */
+  kpiMonth = s.monthIncome;
+  if (insightInited) animateNum($('#kpiRev'), Math.round(kpiMonth), 0, 600);
+}
+/* 离线降级时的演示口径（与原 prototype 假数据一致） */
+const FALLBACK_STATS = {
+  todayIncome:1286, todayCount:12, yesterdayIncome:1188,
+  monthIncome:38642.5, monthExpense:4210, monthCount:168
+};
+
+/* ---------------- 问候 / 店铺资料 / 退出登录 ---------------- */
+function renderGreeting(){
+  const d = new Date();
+  const h = d.getHours();
+  const g = h < 6 ? '夜深了' : h < 12 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
+  $('#helloText').textContent =
+    `${g}，老板，今天是 ${d.getMonth()+1} 月 ${d.getDate()} 日 周${'日一二三四五六'[d.getDay()]}`;
+}
+function applyProfile(){
+  const nameEl = $('#shopNameText');
+  if (nameEl) nameEl.textContent = shopName;
+  $('#sbUserMail').textContent = currentUser.email || '';
+}
+function openProfile(){
+  openSheet(`
+    <div class="sheet-title">店铺与账号</div>
+    <div class="sheet-sub">店铺名称会展示在首页</div>
+    <div class="confirm-card">
+      <div class="cf-row"><label>店铺名称</label><input id="pfShop" value="${esc(shopName)}" maxlength="20" /></div>
+      <div class="cf-row"><label>登录邮箱</label><input value="${esc(currentUser.email||'')}" disabled /></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="sa-btn sa-ghost" id="pfLogout">退出登录</button>
+      <button class="sa-btn sa-primary" id="pfSave">保存</button>
+    </div>`);
+  $('#pfLogout').addEventListener('click', logout);
+  $('#pfSave').addEventListener('click', async ()=>{
+    const name = $('#pfShop').value.trim() || '我的小店';
+    const btn = $('#pfSave'); btn.disabled = true; btn.textContent = '保存中…';
+    try {
+      profile = await Store.saveProfile({ shop_name: name });
+      shopName = name;
+      applyProfile();
+      closeSheet();
+      toast('店铺资料已保存');
+    } catch(e){
+      btn.disabled = false; btn.textContent = '保存';
+      toast('保存失败：' + Store.errMsg(e));
+    }
+  });
+}
+async function logout(){
+  try { await window.sb.auth.signOut(); } catch(_) {}
+  location.replace('auth.html');
+}
+$('#shopNameBtn').addEventListener('click', openProfile);
+$('#sbLogout').addEventListener('click', logout);
+
+/* ============================================================
+   启动：先查登录态，未登录跳 auth.html；登录后并行拉取四张表
+   ============================================================ */
+function splashFatal(msg){
+  const sp = $('#splash');
+  sp.innerHTML = `<div style="padding:32px;text-align:center;color:#4E5969;font-size:14px;line-height:1.7">
+    <div style="font-size:30px;margin-bottom:10px">⚠️</div>${esc(msg)}<br/>
+    <button onclick="location.reload()" class="seed-btn" style="margin-top:14px">刷新重试</button></div>`;
+  sp.classList.remove('off');
+}
+async function boot(){
+  const minDelay = new Promise(r=>setTimeout(r, 900));
+  try {
+    if (!window.SUPABASE_READY || !window.sb) {
+      await minDelay;
+      splashFatal('登录组件加载失败，请检查网络连接（需要能访问 Supabase CDN）');
+      return;
+    }
+    const { data } = await window.sb.auth.getSession();
+    if (!data.session) { location.replace('auth.html'); return; }
+    currentUser = data.session.user;
+
+    window.sb.auth.onAuthStateChange(ev => {
+      if (ev === 'SIGNED_OUT') location.replace('auth.html');
+    });
+
+    renderGreeting();
+
+    const [pRes, txRes, cuRes, invRes] = await Promise.allSettled([
+      Store.getProfile(),
+      Store.listTransactions(),
+      Store.listCustomers(),
+      Store.listInventory()
+    ]);
+
+    /* 店铺资料 */
+    if (pRes.status === 'fulfilled' && pRes.value) {
+      profile = pRes.value;
+      shopName = profile.shop_name || '我的小店';
+    } else {
+      let pending = null;
+      try { pending = localStorage.getItem('pending_shop_name'); } catch(_) {}
+      if (pending) {
+        shopName = pending;
+        Store.saveProfile({ shop_name: pending })
+          .then(()=>{ try { localStorage.removeItem('pending_shop_name'); } catch(_){} })
+          .catch(()=>{});
+      }
+    }
+    applyProfile();
+
+    /* 账目流水 */
+    if (txRes.status === 'fulfilled') {
+      realTx = true;
+      txRows = txRes.value;
+      replaceGroups(Store.groupTransactions(txRows));
+      applyStats(Store.computeStats(txRows));
+      /* 新账号没有储值数据，隐藏演示口径 */
+      $('#homeStoredVal').innerHTML = '0<span class="unit">元</span>';
+      $('#homeStoredSub').textContent = '会员储值 · 待开放';
+    } else {
+      applyStats(FALLBACK_STATS);
+      setTimeout(()=>toast('实时数据加载失败，当前为演示数据'), 1200);
+    }
+    renderFlow();
+
+    /* 客户 */
+    if (cuRes.status === 'fulfilled') {
+      realCust = true;
+      CUSTOMERS.splice(0, CUSTOMERS.length,
+        ...cuRes.value.map(r => Store.toCustomerView(r, txRows)));
+    }
+    applyCustomerSummary();
+    renderCustomers();
+
+    /* 库存 */
+    if (invRes.status === 'fulfilled') {
+      realInv = true;
+      INVENTORY.splice(0, INVENTORY.length, ...invRes.value.map(Store.toInventoryView));
+    }
+    applyInventoryMeta(stats ? stats.monthExpense : 0);
+    renderInventory();
+
+  } catch (e) {
+    applyStats(FALLBACK_STATS);
+    setTimeout(()=>toast('初始化异常：' + Store.errMsg(e)), 1200);
+  } finally {
+    await minDelay;
+    $('#splash').classList.add('off');
+  }
+}
+boot();
 
 }).call(this);
