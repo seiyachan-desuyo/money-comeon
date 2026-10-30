@@ -5,8 +5,11 @@
 
 ## 快速开始
 
-1. 在 [Supabase](https://supabase.com) 创建项目，将 `supabase/schema.sql` 整段粘贴到 **SQL Editor** 执行一次（建 4 张表 + RLS 行级安全策略 + 注册自动建档触发器，幂等可重复执行）。
-2. 把项目地址与 publishable key 填入 `js/supabase.js`（当前已配置）。
+1. 在 [Supabase](https://supabase.com) 创建项目，任选一种方式执行一次 `supabase/schema.sql`（建 4 张表 + RLS 行级安全策略 + 注册自动建档触发器，幂等可重复执行）：
+   - **方式 A（推荐）**：复制 `.env.example` 为 `.env`，填入在 [Account Tokens](https://supabase.com/dashboard/account/tokens) 创建的 Personal Access Token（`sbp_` 开头），执行 `node scripts/init-db.mjs` 一键建表；
+   - **方式 B**：打开 Supabase Dashboard → SQL Editor → New query，整段粘贴 `supabase/schema.sql` → Run。
+   > `.env` 已在 `.gitignore` 中，service_role secret key 仅本地保存，不会提交；前端只使用 publishable key。
+2. 确认 `js/supabase.js` 中的项目地址与 publishable key（当前已配置）。
 3. 用任意静态服务器打开本目录即可（Supabase 回调依赖 http(s) 地址，建议不要直接双击 file:// 打开）：
    ```bash
    python3 -m http.server 8080
@@ -55,6 +58,8 @@ js/data.js      理发店演示数据（流水/客户/库存/同比，作为离�
 js/charts.js    纯 SVG 图表：双折线、迷你趋势线、柱状图、环形仪表
 js/app.js       登录门禁、真实数据渲染、记账写库、语音/截图/手动记账流程、筛选搜索、采购车
 supabase/schema.sql  数据库初始化脚本（建表 + RLS + 触发器）
+scripts/init-db.mjs  一键建表脚本（读 .env 的 SUPABASE_ACCESS_TOKEN，走 Management API）
+.env.example         本地密钥模板（真实 .env 已 gitignore，不提交）
 ```
 
 > 所有经营数据均为虚构演示数据；录音/截图识别为前端模拟流程，便于毕业设计答辩演示。
