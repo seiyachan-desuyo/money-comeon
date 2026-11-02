@@ -315,7 +315,8 @@ async function commitTx(d){
     replaceGroups(Store.groupTransactions(txRows));
     applyStats(Store.computeStats(txRows));
     renderFlow();
-    if (realCust) refreshCustomers();
+    if (realCust) await refreshCustomers();
+    refreshDerived();
     toast(isIn ? `记账成功 +¥${Math.abs(d.amount).toFixed(0)}，已同步云端`
                : `已记支出 ¥${Math.abs(d.amount).toFixed(0)}，已同步云端`);
   } catch (e) {
@@ -388,6 +389,7 @@ async function refreshCustomers(){
     CUSTOMERS.splice(0, CUSTOMERS.length, ...views);
     applyCustomerSummary();
     renderCustomers();
+    refreshDerived();
   } catch(e) { /* 静默：保留当前列表 */ }
 }
 function customerDetail(c){
@@ -489,6 +491,7 @@ async function refreshInventory(){
     INVENTORY.splice(0, INVENTORY.length, ...rows.map(Store.toInventoryView));
     applyInventoryMeta(stats ? stats.monthExpense : 0);
     renderInventory();
+    refreshDerived();
   } catch(e) { /* 静默 */ }
 }
 $('#invSeg').addEventListener('click', e=>{
@@ -544,10 +547,13 @@ document.addEventListener('click', async e=>{
 });
 
 /* ---------------- 经营分析页 ---------------- */
-Charts.gauge($('#gaugeBox'), 82);
 let revPeriod = 'month';
 function renderRevChart(){
   const d = REVENUE[revPeriod];
+  const hasData = d && [...d.thisYear, ...d.lastYear].some(v => v > 0);
+  $('#revChart').hidden = !hasData;
+  $('#revEmpty').hidden = hasData;
+  if (!hasData) { $('#revChart').innerHTML = ''; return; }
   Charts.lineChart($('#revChart'), {
     labels:d.labels, height:190,
     series:[
@@ -573,11 +579,24 @@ function animateFinBars(sel){
     $$(sel).forEach(b=>{ b.style.width = b.dataset.w + '%'; });
   }));
 }
+const FIN_EMPTY = t => `<div class="fin-pane"><div class="list-empty">${t}</div></div>`;
 function renderPL(period){
   const d = PL_DATA[period];
+  if (!d.income.length && !d.cost.length){
+    $('#finContent').innerHTML = `<div class="fin-pane">
+      <div class="fin-mini-seg" id="plPeriod">
+        ${[['month','月'],['quarter','季'],['year','年']].map(([k,t])=>
+          `<span class="seg ${k===period?'on':''}" data-p="${k}">${t}</span>`).join('')}
+      </div>
+      <div class="list-empty">${d.label}暂无收支记录，记账后自动生成利润表</div></div>`;
+    $('#plPeriod').addEventListener('click', e=>{
+      const seg = e.target.closest('.seg'); if (seg) renderPL(seg.dataset.p);
+    });
+    return;
+  }
   const incTotal = sumAmt(d.income), costTotal = sumAmt(d.cost);
   const gross = incTotal - costTotal;
-  const rate = (gross/incTotal*100).toFixed(1);
+  const rate = incTotal > 0 ? (gross/incTotal*100).toFixed(1) : '0.0';
   $('#finContent').innerHTML = `
     <div class="fin-pane">
       <div class="fin-mini-seg" id="plPeriod">
@@ -619,6 +638,7 @@ function renderPL(period){
 function renderBS(){
   const a = sumAmt(BS_DATA.assets), l = sumAmt(BS_DATA.liabilities);
   const net = a - l;
+  if (a === 0 && l === 0){ $('#finContent').innerHTML = FIN_EMPTY('暂无资产数据，记账或录入库存后自动生成家底清单'); return; }
   const group = (title, items, sum, cls)=>`
     <div class="bs-group ${cls}">
       <div class="bs-g-head"><span class="dot"></span>${title}
@@ -644,7 +664,8 @@ function renderBS(){
 }
 function renderCF(){
   const tin = sumAmt(CF_DATA.inflow), tout = sumAmt(CF_DATA.outflow);
-  const net = tin - tout, max = Math.max(tin, tout);
+  const net = tin - tout, max = Math.max(tin, tout, 1);
+  if (tin === 0 && tout === 0){ $('#finContent').innerHTML = FIN_EMPTY('本月暂无资金流动，记账后自动生成现金流'); return; }
   $('#finContent').innerHTML = `
     <div class="fin-pane">
       <div class="cf-compare">
@@ -672,7 +693,7 @@ function renderCF(){
           <div class="cn-label">本月净现金流</div>
           <div class="cn-sub">流入 − 流出，为正说明账上钱在变多</div>
         </div>
-        <div class="cn-num">+¥${fmtY(net)}</div>
+        <div class="cn-num">${net>=0?'+':'−'}¥${fmtY(Math.abs(net))}</div>
       </div>
     </div>`;
   animateFinBars('#finContent .cf-track i');
@@ -722,6 +743,130 @@ const FALLBACK_STATS = {
   todayIncome:1286, todayCount:12, yesterdayIncome:1188,
   monthIncome:38642.5, monthExpense:4210, monthCount:168
 };
+
+/* ============================================================
+   真实数据 → 首页话术 / 待办 / 经营参谋（数据为空显示零或空状态）
+   ============================================================ */
+let todos = [];            // 未完成待办
+let todoTableReady = true; // todos 表是否已建
+let demoMode = false;      // 接口失败降级为演示数据
+
+function setKpi(id, val, cmp, decimals){
+  animateNum($('#'+id), val, decimals || 0, 600);
+  const em = $('#'+id+'Cmp');
+  if (em && cmp){ em.textContent = cmp.text; em.className = cmp.cls; }
+}
+function renderTodos(){
+  const n = todos.length;
+  $('#todoCount').textContent = `${n} 条需处理`;
+  const bell = $('#homeBell');
+  bell.dataset.tip = n ? `${n} 条待办` : '暂无待办';
+  $('#bellDot').hidden = n === 0;
+  const add = `<div class="todo-add"><input id="todoInput" maxlength="40" placeholder="${todoTableReady?'添加一条待办，如：周五前补货染发膏':'待办表未初始化'}" ${todoTableReady?'':'disabled'}/><button id="todoAddBtn" ${todoTableReady?'':'disabled'}>添加</button></div>`;
+  const empty = todoTableReady
+    ? '<div class="list-empty">暂无待办，今天可以专心做生意 ✨</div>'
+    : '<div class="list-empty">待办功能需先在 Supabase 执行 supabase/migrations/002_todos.sql</div>';
+  $('#todoList').innerHTML = (n ? todos.map(t => `
+    <div class="todo-item">
+      <span class="todo-ic todo-warn">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l3 3 5-6"/></svg>
+      </span>
+      <div class="todo-body">
+        <div class="todo-title">${esc(t.title)}</div>
+        <div class="todo-desc">创建于 ${new Date(t.created_at).toLocaleDateString('zh-CN')}</div>
+      </div>
+      <span class="todo-btn warn" data-todo-done="${t.id}">完成</span>
+    </div>`).join('') : empty) + (demoMode ? '' : add);
+}
+async function refreshTodos(){
+  if (demoMode) return renderTodos();
+  try {
+    const r = await Store.listTodos();
+    todoTableReady = r !== null;
+    todos = r || [];
+  } catch(e){ todos = []; }
+  renderTodos();
+  renderHero();
+}
+document.addEventListener('click', async e=>{
+  const done = e.target.closest('[data-todo-done]');
+  if (done){
+    done.textContent = '…';
+    try { await Store.completeTodo(done.dataset.todoDone); toast('待办已完成'); }
+    catch(err){ toast('操作失败：' + Store.errMsg(err)); }
+    return refreshTodos();
+  }
+  if (e.target.closest('#todoAddBtn')){
+    const inp = $('#todoInput'); const title = (inp.value || '').trim();
+    if (!title) return toast('请输入待办内容');
+    try { await Store.addTodo(title); toast('已添加待办'); }
+    catch(err){ toast('添加失败：' + Store.errMsg(err)); }
+    return refreshTodos();
+  }
+  if (e.target.closest('#homeBell')){
+    const p = $('#todoList'); p && p.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+});
+document.addEventListener('keydown', e=>{
+  if (e.key === 'Enter' && e.target.id === 'todoInput') $('#todoAddBtn').click();
+});
+
+function renderHero(){
+  const hasAny = demoMode || txRows.length > 0;
+  const h = demoMode
+    ? { title:'演示模式', desc:'实时数据暂时无法加载，当前展示演示数据' }
+    : Insights.buildHero(stats || {todayCount:0,todayIncome:0,yesterdayIncome:0,monthIncome:0}, todos.length, hasAny);
+  $('#hbTitle').textContent = h.title;
+  $('#hbDesc').textContent = h.desc;
+}
+
+const ADV_TAG = { '库存':'tag-huo', '客户':'tag-ke', '营收':'tag-go', '稳健':'tag-go' };
+function renderInsightsReal(){
+  if (demoMode) {
+    Charts.gauge($('#gaugeBox'), 82);
+    renderGaugeNote({level:'良好',notes:[{t:'当前为演示数据，联网后显示真实经营评分',risk:false}]});
+    setKpi('kpiRev', Math.round(FALLBACK_STATS.monthIncome), {text:'演示数据',cls:'flat'});
+    const adv = Insights.build([], CUSTOMERS, INVENTORY).advice;
+    $('#adviceList').innerHTML = adv.map(a => `<div class="advice-card"><div class="adv-top"><span class="adv-tag ${ADV_TAG[a.tag]||'tag-go'}">${a.tag}</span><span class="adv-conf">演示数据</span></div><p class="adv-text"><b>${esc(a.title)}</b>：${esc(a.desc)}</p></div>`).join('');
+    return;
+  }
+  const d = Insights.build(txRows, CUSTOMERS, INVENTORY);
+  /* 覆盖演示口径，复用原渲染函数 */
+  Object.assign(REVENUE, d.revenue);
+  Object.assign(PL_DATA, d.pl);
+  Object.assign(BS_DATA, d.bs);
+  Object.assign(CF_DATA, d.cf);
+  Charts.gauge($('#gaugeBox'), d.health.score);
+  renderGaugeNote(d.health);
+  kpiMonth = d.kpi.rev;
+  setKpi('kpiRev', d.kpi.rev, d.kpi.revCmp);
+  setKpi('kpiAvg', d.kpi.avg, d.kpi.avgCmp, 1);
+  setKpi('kpiFlow', d.kpi.flow, d.kpi.flowCmp);
+  setKpi('kpiRepeat', d.kpi.repeat, d.kpi.repeatCmp);
+  /* 商圈竞品：尚未接入外部数据源，真实账号显示空状态 */
+  $('#cmpBox').innerHTML = '<div class="list-empty">暂未接入美团 / 大众点评商圈数据，接入后自动展示竞品对比</div>';
+  $('#adviceList').innerHTML = d.advice.length ? d.advice.map(a => `
+    <div class="advice-card">
+      <div class="adv-top"><span class="adv-tag ${ADV_TAG[a.tag]||'tag-go'}">${a.tag}</span><span class="adv-conf">基于本店真实数据</span></div>
+      <p class="adv-text"><b>${esc(a.title)}</b>：${esc(a.desc)}</p>
+      ${a.tag==='库存'?'<button class="adv-btn" data-go="inventory">去库存页补货</button>':''}
+      ${a.tag==='客户'?'<button class="adv-btn" data-go="customers">查看流失客户</button>':''}
+    </div>`).join('')
+    : '<div class="list-empty">数据积累中，记账满一周后生成经营建议</div>';
+  const finOn = $('#finSeg .seg.on');
+  renderFinance(finOn ? finOn.dataset.fin : 'pl');
+  if ($('#page-insights').classList.contains('on')) renderRevChart();
+}
+function renderGaugeNote(h){
+  const cls = h.score === 0 && h.level === '暂无数据' ? 'style="color:var(--ink-3);background:var(--bg-gray)"' : '';
+  $('#gaugeNote').innerHTML = `
+    <div class="gn-title">经营健康分 <em ${cls}>${esc(h.level)}</em></div>
+    <ul>${h.notes.map(n=>`<li class="${n.risk?'risk':''}">${esc(n.t)}</li>`).join('')}</ul>`;
+}
+function refreshDerived(){
+  renderHero();
+  renderInsightsReal();
+}
 
 /* ---------------- 问候 / 店铺资料 / 退出登录 ---------------- */
 function renderGreeting(){
@@ -799,11 +944,12 @@ async function boot(){
 
     renderGreeting();
 
-    const [pRes, txRes, cuRes, invRes] = await Promise.allSettled([
+    const [pRes, txRes, cuRes, invRes, tdRes] = await Promise.allSettled([
       Store.getProfile(),
       Store.listTransactions(),
       Store.listCustomers(),
-      Store.listInventory()
+      Store.listInventory(),
+      Store.listTodos()
     ]);
 
     /* 店铺资料 */
@@ -832,6 +978,7 @@ async function boot(){
       $('#homeStoredVal').innerHTML = '0<span class="unit">元</span>';
       $('#homeStoredSub').textContent = '会员储值 · 待开放';
     } else {
+      demoMode = true;
       applyStats(FALLBACK_STATS);
       setTimeout(()=>toast('实时数据加载失败，当前为演示数据'), 1200);
     }
@@ -854,8 +1001,21 @@ async function boot(){
     applyInventoryMeta(stats ? stats.monthExpense : 0);
     renderInventory();
 
+    // 待办
+    if (tdRes.status === 'fulfilled') {
+      todoTableReady = tdRes.value !== null;
+      todos = tdRes.value || [];
+    } else {
+      todos = [];
+    }
+    renderTodos();
+    refreshDerived();
+
   } catch (e) {
+    demoMode = true;
     applyStats(FALLBACK_STATS);
+    renderTodos();
+    refreshDerived();
     setTimeout(()=>toast('初始化异常：' + Store.errMsg(e)), 1200);
   } finally {
     await minDelay;

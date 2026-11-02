@@ -208,8 +208,30 @@ const Store = (function () {
     if (error) throw error;
   }
 
+  /* ---------------- todos 待办 ----------------
+     表不存在（尚未执行迁移）时返回 null，由调用方显示提示 */
+  async function listTodos() {
+    const { data, error } = await window.sb.from('todos')
+      .select('*').eq('done', false).order('created_at', { ascending: false });
+    if (error) {
+      if (error.code === 'PGRST205' || error.code === '42P01' || /does not exist|schema cache/i.test(error.message || '')) return null;
+      throw error;
+    }
+    return data || [];
+  }
+  async function addTodo(title) {
+    const { data, error } = await window.sb.from('todos').insert({ title }).select().single();
+    if (error) throw error;
+    return data;
+  }
+  async function completeTodo(id) {
+    const { error } = await window.sb.from('todos').update({ done: true }).eq('id', id);
+    if (error) throw error;
+  }
+
   return {
     errMsg,
+    listTodos, addTodo, completeTodo,
     getProfile, saveProfile,
     listTransactions, addTransaction, groupTransactions, computeStats, toTxView,
     listCustomers, toCustomerView, seedCustomers,

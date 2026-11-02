@@ -123,3 +123,24 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ============================================================
+-- 6. todos 待办（首页「待办提醒」真实统计来源）
+-- ============================================================
+create table if not exists public.todos (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  title       text not null,
+  done        boolean not null default false,
+  created_at  timestamptz not null default now()
+);
+
+alter table public.todos enable row level security;
+
+drop policy if exists "todos_owner_all" on public.todos;
+create policy "todos_owner_all" on public.todos
+  for all
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+create index if not exists idx_todos_user_done on public.todos (user_id, done);
