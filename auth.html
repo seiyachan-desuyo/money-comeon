@@ -61,6 +61,12 @@
       <button class="auth-btn" id="adBack">返回登录</button>
       <button class="auth-link-btn" id="adResend">重新发送确认邮件</button>
     </div>
+    <div class="auth-demo-divider"><span>或</span></div>
+    <button type="button" class="auth-demo-btn" id="demoBtn">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></svg>
+      体验演示模式
+    </button>
+    <div class="auth-demo-tip">无需注册，直接体验全部功能 · 数据不会保存</div>
   </div>
   <div class="auth-foot">毕业设计演示 · 数据存储于 Supabase，开启行级安全隔离</div>
 </div>
@@ -68,5 +74,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
+<script>
+document.getElementById('demoBtn').addEventListener('click', function () {
+  try { sessionStorage.setItem('lqh_demo', '1'); } catch (e) {}
+  location.replace('index.html');
+});
+</script>
 </body>
 </html>

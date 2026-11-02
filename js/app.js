@@ -814,7 +814,7 @@ document.addEventListener('keydown', e=>{
 function renderHero(){
   const hasAny = demoMode || txRows.length > 0;
   const h = demoMode
-    ? { title:'演示模式', desc:'实时数据暂时无法加载，当前展示演示数据' }
+    ? { title:'演示模式', desc:'当前为演示数据，体验完整功能请注册真实账号' }
     : Insights.buildHero(stats || {todayCount:0,todayIncome:0,yesterdayIncome:0,monthIncome:0}, todos.length, hasAny);
   $('#hbTitle').textContent = h.title;
   $('#hbDesc').textContent = h.desc;
@@ -824,7 +824,7 @@ const ADV_TAG = { '库存':'tag-huo', '客户':'tag-ke', '营收':'tag-go', '稳
 function renderInsightsReal(){
   if (demoMode) {
     Charts.gauge($('#gaugeBox'), 82);
-    renderGaugeNote({level:'良好',notes:[{t:'当前为演示数据，联网后显示真实经营评分',risk:false}]});
+    renderGaugeNote({level:'良好',notes:[{t:'当前为演示数据，注册后显示真实经营评分',risk:false}]});
     setKpi('kpiRev', Math.round(FALLBACK_STATS.monthIncome), {text:'演示数据',cls:'flat'});
     const adv = Insights.build([], CUSTOMERS, INVENTORY).advice;
     $('#adviceList').innerHTML = adv.map(a => `<div class="advice-card"><div class="adv-top"><span class="adv-tag ${ADV_TAG[a.tag]||'tag-go'}">${a.tag}</span><span class="adv-conf">演示数据</span></div><p class="adv-text"><b>${esc(a.title)}</b>：${esc(a.desc)}</p></div>`).join('');
@@ -909,9 +909,12 @@ function openProfile(){
     }
   });
 }
-async function logout(){
-  try { await window.sb.auth.signOut(); } catch(_) {}
-  location.replace('auth.html');
+function logout(){
+  if (window.DEMO_MODE) { window.exitDemoMode(); return; }
+  (async () => {
+    try { await window.sb.auth.signOut(); } catch(_) {}
+    location.replace('auth.html');
+  })();
 }
 $('#shopNameBtn').addEventListener('click', openProfile);
 $('#sbLogout').addEventListener('click', logout);
@@ -928,6 +931,26 @@ function splashFatal(msg){
 }
 async function boot(){
   const minDelay = new Promise(r=>setTimeout(r, 900));
+  /* 演示模式：只用 js/data.js 演示数据，完全不连 Supabase */
+  if (window.DEMO_MODE) {
+    demoMode = true;
+    shopName = '星心理发店 · 望京店';
+    const nameEl = $('#shopNameText'); if (nameEl) nameEl.textContent = shopName;
+    $('#sbUserMail').textContent = '演示账号（未登录）';
+    renderGreeting();
+    applyStats(FALLBACK_STATS);
+    renderFlow();
+    applyCustomerSummary();
+    renderCustomers();
+    applyInventoryMeta(FALLBACK_STATS.monthExpense);
+    renderInventory();
+    todos = [];
+    renderTodos();
+    refreshDerived();
+    await minDelay;
+    $('#splash').classList.add('off');
+    return;
+  }
   try {
     if (!window.SUPABASE_READY || !window.sb) {
       await minDelay;

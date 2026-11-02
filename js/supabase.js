@@ -3,6 +3,12 @@
    ============================================================ */
 (function () {
   'use strict';
+  /* 演示模式：不创建客户端，彻底断开云端 */
+  if (window.DEMO_MODE) {
+    window.SUPABASE_READY = false;
+    window.sb = null;
+    return;
+  }
   var SUPA_URL = 'https://rnaxhvsyyixtburltvjt.supabase.co';
   // publishable key：只具备 anon 权限，可安全暴露在前端
   var SUPA_KEY = 'sb_publishable_0bggIv719Mx_nC89k7Qv-w_u1F_md7o';
